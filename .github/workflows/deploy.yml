@@ -20,7 +20,7 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd /var/www/my-nba-app
+            cd /var/www/gamblers-anonymous
             git pull origin main
             docker-compose down
             docker-compose up -d --build
