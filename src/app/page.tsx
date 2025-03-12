@@ -4,6 +4,7 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <h1>Gamblers Anonymous</h1>
         <p>Not the actual one.</p>
+        <p>Go Birds</p>
       </main>
     </div>
   );
