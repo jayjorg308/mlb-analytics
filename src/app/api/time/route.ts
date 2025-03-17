@@ -1,8 +1,9 @@
+import { DATABASE_URL } from "@/app/shared/serverUtils";
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
 
 const pool = new Pool({
-    connectionString: `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@postgres:5432/${process.env.POSTGRES_DB}`,
+    connectionString: DATABASE_URL,
 });
 
 export async function GET() {
