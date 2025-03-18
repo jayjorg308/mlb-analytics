@@ -1,10 +1,24 @@
-import { Box, Typography } from "@mui/material";
+import { prisma } from "@/lib/prisma";
+import { Team } from "@prisma/client";
 
-export default function NBA() {
+export default async function NBAPage() {
+    const nbaLeague = await prisma.league.findFirst({
+        where: { abbreviation: "NBA" },
+        include: { teams: true },
+    });
+
+    const teams: Team[] = nbaLeague?.teams || [];
+
     return (
-        <Box>
-            <Typography>NBA Page</Typography>
-            <Typography>Welcome to the NBA section!</Typography>
-        </Box>
+        <div>
+            <h1>NBA Teams</h1>
+            <ul>
+                {teams.map((team) => (
+                    <li key={team.id}>
+                        {team.city} {team.name}
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }

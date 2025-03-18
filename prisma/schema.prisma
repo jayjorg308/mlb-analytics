@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Conference {
+  id         Int         @id @default(autoincrement())
+  name       String      @db.VarChar(100)
+  short_name String      @db.VarChar(50)
+  league_id  Int?
+  leagues    League?    @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  divisions  Division[]
+  teams      Team[]
+
+  @@map("conferences")
+}
+
+model Division {
+  id            Int          @id @default(autoincrement())
+  name          String       @db.VarChar(100)
+  short_name    String       @db.VarChar(50)
+  league_id     Int?
+  conference_id Int?
+  conferences   Conference? @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  leagues       League?     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teams         Team[]
+
+  @@map("divisions")
+}
+
+model Game {
+  id                              Int      @id @default(autoincrement())
+  league_id                       Int?
+  home_team_id                    Int?
+  away_team_id                    Int?
+  game_date                       DateTime @db.Date
+  home_score                      Int?
+  away_score                      Int?
+  teams_games_away_team_idToteams Team?   @relation("games_away_team_idToteams", fields: [away_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teams_games_home_team_idToteams Team?   @relation("games_home_team_idToteams", fields: [home_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  leagues                         League? @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("games")
+}
+
+model League {
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(100)
+  sport        String        @db.VarChar(50)
+  abbreviation String        @unique @db.VarChar(10)
+  conferences  Conference[]
+  divisions    Division[]
+  games        Game[]
+  teams        Team[]
+
+  @@map("leagues")
+}
+
+model Team {
+  id                              Int          @id @default(autoincrement())
+  league_id                       Int?
+  name                            String       @db.VarChar(100)
+  city                            String       @db.VarChar(100)
+  abbreviation                    String       @db.VarChar(10)
+  logo_url                        String?
+  conference_id                   Int?
+  division_id                     Int?
+  primary_color                   String?      @db.VarChar(100)
+  secondary_color                 String?      @db.VarChar(100)
+  games_games_away_team_idToteams Game[]      @relation("games_away_team_idToteams")
+  games_games_home_team_idToteams Game[]      @relation("games_home_team_idToteams")
+  conferences                     Conference? @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  divisions                       Division?   @relation(fields: [division_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  leagues                         League?     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+   @@map("teams")
+}
