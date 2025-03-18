@@ -1,13 +1,19 @@
-import { prisma } from "@/lib/prisma";
+"use client";
 import { Team } from "@prisma/client";
+import { useEffect, useState } from "react";
 
-export default async function NBAPage() {
-    const nbaLeague = await prisma.league.findFirst({
-        where: { abbreviation: "NBA" },
-        include: { teams: true },
-    });
+export default function NBAPage() {
+    const [teams, setTeams] = useState<Team[]>([]);
 
-    const teams: Team[] = nbaLeague?.teams || [];
+    useEffect(() => {
+        const fetchTeams = async () => {
+            const res = await fetch("/api/nba/teams");
+            const data = await res.json();
+            setTeams(data);
+        };
+
+        fetchTeams();
+    }, []);
 
     return (
         <div>

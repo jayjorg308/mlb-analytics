@@ -2,10 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    const nbaLeague = await prisma.league.findFirst({
-        where: { abbreviation: "NBA" },
+    const mlbLeague = await prisma.league.findFirst({
+        where: { abbreviation: "MLB" },
         include: { teams: true },
     });
 
-    return NextResponse.json(nbaLeague?.teams || []);
+    return NextResponse.json(mlbLeague?.teams || []);
 }
