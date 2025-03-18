@@ -21,7 +21,7 @@ export default function NBAPage() {
             <ul>
                 {teams.map((team) => (
                     <li key={team.id}>
-                        {team.city} {team.name}
+                        {team.city} {team.name} ({team.abbreviation})
                     </li>
                 ))}
             </ul>
