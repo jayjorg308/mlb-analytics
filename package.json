@@ -19,6 +19,7 @@
         "@mui/material": "^6.4.7",
         "@mui/material-nextjs": "^6.4.3",
         "@prisma/client": "^6.5.0",
+        "axios": "^1.8.4",
         "next": "15.2.2",
         "pg": "^8.14.0",
         "react": "^19.0.0",

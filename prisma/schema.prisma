@@ -112,7 +112,7 @@ model Game {
 
 model Team {
   id              Int    @id @default(autoincrement())
-  mlb_api_id      Int?
+  mlb_api_id      Int?   @unique
   league_id       Int
   name            String @db.VarChar(100)
   city            String @db.VarChar(100)
@@ -149,9 +149,19 @@ model Position {
 
 model Player {
   id            Int           @id @default(autoincrement())
+  mlb_person_id Int?
   firstName     String        @db.VarChar(100)
   lastName      String        @db.VarChar(100)
+  birthDate     DateTime      @db.Date
+  age           Int?
+  birthCity     String        @db.VarChar(100)
+  birthState    String        @db.VarChar(100)
+  birthCountry  String        @db.VarChar(100)
+  height        Int?
+  weight        Int?
+  debutDate     DateTime?
   uniformNumber Int?
+  photoUrl      String        @db.VarChar(255)
   battingHand   BattingHand?
   throwingHand  ThrowingHand?
   teamId        Int?
