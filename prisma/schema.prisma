@@ -22,6 +22,7 @@ enum BattingHand {
 enum ThrowingHand {
   LEFT
   RIGHT
+  SWITCH
 }
 
 enum GameStatus {
@@ -137,19 +138,21 @@ model Team {
 }
 
 model Position {
-  id           Int              @id @default(autoincrement())
-  name         String           @db.VarChar(100)
-  abbreviation String           @db.VarChar(10)
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(100)
+  abbreviation String    @db.VarChar(10)
   pos_number   Int?
   sport        SportType
-  players      PlayerPosition[]
 
+  players PlayerPosition[]
+
+  @@unique([abbreviation, sport]) // Composite unique constraint
   @@map("positions")
 }
 
 model Player {
   id            Int           @id @default(autoincrement())
-  mlb_person_id Int?
+  mlb_person_id Int?          @unique
   firstName     String        @db.VarChar(100)
   lastName      String        @db.VarChar(100)
   birthDate     DateTime      @db.Date
