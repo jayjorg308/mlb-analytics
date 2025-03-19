@@ -7,12 +7,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
+enum SportType {
+  BASEBALL
+  BASKETBALL
+}
+
+enum BattingHand {
+  LEFT
+  RIGHT
+  SWITCH
+}
+
+enum ThrowingHand {
+  LEFT
+  RIGHT
+}
+
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  FINAL
+  POSTPONED
+  CANCELED
+}
+
+// MODELS
+model League {
+  id           Int          @id @default(autoincrement())
+  name         String       @db.VarChar(100)
+  sport        SportType
+  abbreviation String       @unique @db.VarChar(10)
+  conferences  Conference[]
+  divisions    Division[]
+  games        Game[]
+  teams        Team[]
+  seasons      Season[]
+
+  @@map("leagues")
+}
+
 model Conference {
-  id         Int         @id @default(autoincrement())
-  name       String      @db.VarChar(100)
-  short_name String      @db.VarChar(50)
-  league_id  Int?
-  leagues    League?    @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id         Int        @id @default(autoincrement())
+  name       String     @db.VarChar(100)
+  short_name String     @db.VarChar(50)
+  league_id  Int
+  league     League     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   divisions  Division[]
   teams      Team[]
 
@@ -20,62 +60,213 @@ model Conference {
 }
 
 model Division {
-  id            Int          @id @default(autoincrement())
-  name          String       @db.VarChar(100)
-  short_name    String       @db.VarChar(50)
-  league_id     Int?
-  conference_id Int?
-  conferences   Conference? @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  leagues       League?     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            Int        @id @default(autoincrement())
+  name          String     @db.VarChar(100)
+  short_name    String     @db.VarChar(50)
+  league_id     Int
+  conference_id Int
+  conference    Conference @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  league        League     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   teams         Team[]
 
   @@map("divisions")
 }
 
+model Season {
+  id        Int      @id @default(autoincrement())
+  leagueId  Int
+  year      Int
+  startDate DateTime
+  endDate   DateTime
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  games  Game[]
+
+  @@unique([leagueId, year])
+  @@map("seasons")
+}
+
 model Game {
-  id                              Int      @id @default(autoincrement())
-  league_id                       Int?
-  home_team_id                    Int?
-  away_team_id                    Int?
-  game_date                       DateTime @db.Date
-  home_score                      Int?
-  away_score                      Int?
-  teams_games_away_team_idToteams Team?   @relation("games_away_team_idToteams", fields: [away_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  teams_games_home_team_idToteams Team?   @relation("games_home_team_idToteams", fields: [home_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  leagues                         League? @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id              Int        @id @default(autoincrement())
+  league_id       Int
+  season_id       Int
+  home_team_id    Int
+  away_team_id    Int
+  game_date       DateTime   @db.Date
+  game_status     GameStatus
+  is_neutral_site Boolean    @default(false)
+  home_score      Int?
+  away_score      Int?
+
+  league           League            @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  season           Season            @relation(fields: [season_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  away_team        Team              @relation("games_away_team_idToteams", fields: [away_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  home_team        Team              @relation("games_home_team_idToteams", fields: [home_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  playerStats      PlayerStats[]
+  teamStats        TeamStats[]
+  battingOrders    BattingOrder[]
+  startingPitchers StartingPitcher[]
 
   @@map("games")
 }
 
-model League {
-  id           Int           @id @default(autoincrement())
-  name         String        @db.VarChar(100)
-  sport        String        @db.VarChar(50)
-  abbreviation String        @unique @db.VarChar(10)
-  conferences  Conference[]
-  divisions    Division[]
-  games        Game[]
-  teams        Team[]
+model Team {
+  id              Int    @id @default(autoincrement())
+  league_id       Int
+  name            String @db.VarChar(100)
+  city            String @db.VarChar(100)
+  abbreviation    String @db.VarChar(10)
+  logo_url        String @db.VarChar(255)
+  conference_id   Int
+  division_id     Int
+  primary_color   String @db.VarChar(100)
+  secondary_color String @db.VarChar(100)
 
-  @@map("leagues")
+  conference       Conference        @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  division         Division          @relation(fields: [division_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  league           League            @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  away_games       Game[]            @relation("games_away_team_idToteams")
+  home_games       Game[]            @relation("games_home_team_idToteams")
+  players          Player[]
+  teamStats        TeamStats[]
+  battingOrders    BattingOrder[]
+  startingPitchers StartingPitcher[]
+
+  @@map("teams")
 }
 
-model Team {
-  id                              Int          @id @default(autoincrement())
-  league_id                       Int?
-  name                            String       @db.VarChar(100)
-  city                            String       @db.VarChar(100)
-  abbreviation                    String       @db.VarChar(10)
-  logo_url                        String?
-  conference_id                   Int?
-  division_id                     Int?
-  primary_color                   String?      @db.VarChar(100)
-  secondary_color                 String?      @db.VarChar(100)
-  games_games_away_team_idToteams Game[]      @relation("games_away_team_idToteams")
-  games_games_home_team_idToteams Game[]      @relation("games_home_team_idToteams")
-  conferences                     Conference? @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  divisions                       Division?   @relation(fields: [division_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  leagues                         League?     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+model Position {
+  id      Int              @id @default(autoincrement())
+  name    String           @db.VarChar(100)
+  sport   SportType
+  players PlayerPosition[]
 
-   @@map("teams")
+  @@map("positions")
+}
+
+model Player {
+  id            Int           @id @default(autoincrement())
+  firstName     String        @db.VarChar(100)
+  lastName      String        @db.VarChar(100)
+  uniformNumber Int?
+  battingHand   BattingHand?
+  throwingHand  ThrowingHand?
+  teamId        Int?
+
+  team            Team?                  @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  stats           PlayerStats[]
+  batterMatchups  BatterVsPitcherStats[] @relation("batter")
+  pitcherMatchups BatterVsPitcherStats[] @relation("pitcher")
+  positions       PlayerPosition[]
+  injuries        Injury[]
+  StartingPitcher StartingPitcher[]
+  BattingOrder    BattingOrder[]
+
+  @@map("players")
+}
+
+model PlayerPosition {
+  id         Int @id @default(autoincrement())
+  playerId   Int
+  positionId Int
+
+  player   Player   @relation(fields: [playerId], references: [id])
+  position Position @relation(fields: [positionId], references: [id])
+
+  @@unique([playerId, positionId])
+  @@map("player_positions")
+}
+
+model PlayerStats {
+  id             Int    @id @default(autoincrement())
+  playerId       Int
+  gameId         Int
+  atBats         Int?
+  hits           Int?
+  runs           Int?
+  homeRuns       Int?
+  rbis           Int?
+  walks          Int?
+  strikeouts     Int?
+  inningsPitched Float?
+  earnedRuns     Int?
+
+  player Player @relation(fields: [playerId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id])
+
+  @@map("player_stats")
+}
+
+model TeamStats {
+  id     Int  @id @default(autoincrement())
+  teamId Int
+  gameId Int
+  runs   Int?
+  hits   Int?
+  errors Int?
+
+  team Team @relation(fields: [teamId], references: [id])
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@map("team_stats")
+}
+
+model BatterVsPitcherStats {
+  id         Int @id @default(autoincrement())
+  batterId   Int
+  pitcherId  Int
+  atBats     Int
+  hits       Int
+  strikeouts Int
+  homeRuns   Int
+  rbis       Int
+
+  batter  Player @relation("batter", fields: [batterId], references: [id])
+  pitcher Player @relation("pitcher", fields: [pitcherId], references: [id])
+
+  @@map("batter_vs_pitcher_stats")
+}
+
+model Injury {
+  id             Int       @id @default(autoincrement())
+  playerId       Int
+  status         String    @db.VarChar(100)
+  description    String?   @db.Text
+  startDate      DateTime
+  expectedReturn DateTime?
+  resolved       Boolean   @default(false)
+  updatedAt      DateTime  @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@map("injuries")
+}
+
+model StartingPitcher {
+  id       Int @id @default(autoincrement())
+  gameId   Int
+  teamId   Int
+  playerId Int
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([gameId, teamId])
+  @@map("starting_pitchers")
+}
+
+model BattingOrder {
+  id       Int @id @default(autoincrement())
+  gameId   Int
+  teamId   Int
+  playerId Int
+  order    Int // 1 through 9
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([gameId, teamId, order])
+  @@map("batting_orders")
 }
