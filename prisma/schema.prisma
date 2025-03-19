@@ -136,10 +136,12 @@ model Team {
 }
 
 model Position {
-  id      Int              @id @default(autoincrement())
-  name    String           @db.VarChar(100)
-  sport   SportType
-  players PlayerPosition[]
+  id           Int              @id @default(autoincrement())
+  name         String           @db.VarChar(100)
+  abbreviation String           @db.VarChar(10)
+  pos_number   Int?
+  sport        SportType
+  players      PlayerPosition[]
 
   @@map("positions")
 }
