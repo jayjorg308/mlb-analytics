@@ -112,6 +112,7 @@ model Game {
 
 model Team {
   id              Int    @id @default(autoincrement())
+  mlb_api_id      Int?
   league_id       Int
   name            String @db.VarChar(100)
   city            String @db.VarChar(100)
