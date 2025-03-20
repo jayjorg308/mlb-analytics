@@ -33,6 +33,14 @@ enum GameStatus {
   CANCELED
 }
 
+enum GameType {
+  R // Regular Season
+  S // Spring Training
+  E // Exhibition
+  P // Postseason
+  A // All-Star Game
+}
+
 // MODELS
 model League {
   id           Int          @id @default(autoincrement())
@@ -53,7 +61,7 @@ model Conference {
   name       String     @db.VarChar(100)
   short_name String     @db.VarChar(50)
   league_id  Int
-  league     League     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  league     League     @relation(fields: [league_id], references: [id], onDelete: Cascade)
   divisions  Division[]
   teams      Team[]
 
@@ -66,8 +74,8 @@ model Division {
   short_name    String     @db.VarChar(50)
   league_id     Int
   conference_id Int
-  conference    Conference @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  league        League     @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conference    Conference @relation(fields: [conference_id], references: [id], onDelete: Cascade)
+  league        League     @relation(fields: [league_id], references: [id], onDelete: Cascade)
   teams         Team[]
 
   @@map("divisions")
@@ -80,8 +88,9 @@ model Season {
   startDate DateTime
   endDate   DateTime
 
-  league League @relation(fields: [leagueId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  games  Game[]
+  league     League       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  games      Game[]
+  TeamRecord TeamRecord[]
 
   @@unique([leagueId, year])
   @@map("seasons")
@@ -89,24 +98,29 @@ model Season {
 
 model Game {
   id              Int        @id @default(autoincrement())
+  mlb_api_id      Int?       @unique
   league_id       Int
   season_id       Int
   home_team_id    Int
   away_team_id    Int
+  venue_id        Int
+  game_type       GameType
   game_date       DateTime   @db.Date
   game_status     GameStatus
   is_neutral_site Boolean    @default(false)
   home_score      Int?
   away_score      Int?
+  winner_team_id  Int?
 
-  league           League            @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  season           Season            @relation(fields: [season_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  away_team        Team              @relation("games_away_team_idToteams", fields: [away_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  home_team        Team              @relation("games_home_team_idToteams", fields: [home_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  league           League            @relation(fields: [league_id], references: [id], onDelete: Cascade)
+  season           Season            @relation(fields: [season_id], references: [id], onDelete: Cascade)
+  away_team        Team              @relation("games_away_team_idToteams", fields: [away_team_id], references: [id], onDelete: Cascade)
+  home_team        Team              @relation("games_home_team_idToteams", fields: [home_team_id], references: [id], onDelete: Cascade)
   playerStats      PlayerStats[]
   teamStats        TeamStats[]
   battingOrders    BattingOrder[]
   startingPitchers StartingPitcher[]
+  TeamRecord       TeamRecord[]
 
   @@map("games")
 }
@@ -115,6 +129,7 @@ model Team {
   id              Int    @id @default(autoincrement())
   mlb_api_id      Int?   @unique
   league_id       Int
+  venue_id        Int?
   name            String @db.VarChar(100)
   city            String @db.VarChar(100)
   abbreviation    String @db.VarChar(10)
@@ -124,15 +139,17 @@ model Team {
   primary_color   String @db.VarChar(100)
   secondary_color String @db.VarChar(100)
 
-  conference       Conference        @relation(fields: [conference_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  division         Division          @relation(fields: [division_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  league           League            @relation(fields: [league_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conference       Conference        @relation(fields: [conference_id], references: [id], onDelete: Cascade)
+  division         Division          @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  league           League            @relation(fields: [league_id], references: [id], onDelete: Cascade)
   away_games       Game[]            @relation("games_away_team_idToteams")
   home_games       Game[]            @relation("games_home_team_idToteams")
   players          Player[]
   teamStats        TeamStats[]
   battingOrders    BattingOrder[]
   startingPitchers StartingPitcher[]
+  Venue            Venue[]
+  TeamRecord       TeamRecord[]
 
   @@map("teams")
 }
@@ -146,7 +163,7 @@ model Position {
 
   players PlayerPosition[]
 
-  @@unique([abbreviation, sport]) // Composite unique constraint
+  @@unique([abbreviation, sport])
   @@map("positions")
 }
 
@@ -186,8 +203,8 @@ model PlayerPosition {
   playerId   Int
   positionId Int
 
-  player   Player   @relation(fields: [playerId], references: [id])
-  position Position @relation(fields: [positionId], references: [id])
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, positionId])
   @@map("player_positions")
@@ -207,8 +224,8 @@ model PlayerStats {
   inningsPitched Float?
   earnedRuns     Int?
 
-  player Player @relation(fields: [playerId], references: [id])
-  game   Game   @relation(fields: [gameId], references: [id])
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@map("player_stats")
 }
@@ -221,8 +238,8 @@ model TeamStats {
   hits   Int?
   errors Int?
 
-  team Team @relation(fields: [teamId], references: [id])
-  game Game @relation(fields: [gameId], references: [id])
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@map("team_stats")
 }
@@ -237,8 +254,8 @@ model BatterVsPitcherStats {
   homeRuns   Int
   rbis       Int
 
-  batter  Player @relation("batter", fields: [batterId], references: [id])
-  pitcher Player @relation("pitcher", fields: [pitcherId], references: [id])
+  batter  Player @relation("batter", fields: [batterId], references: [id], onDelete: Cascade)
+  pitcher Player @relation("pitcher", fields: [pitcherId], references: [id], onDelete: Cascade)
 
   @@map("batter_vs_pitcher_stats")
 }
@@ -253,7 +270,7 @@ model Injury {
   resolved       Boolean   @default(false)
   updatedAt      DateTime  @updatedAt
 
-  player Player @relation(fields: [playerId], references: [id])
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@map("injuries")
 }
@@ -264,9 +281,9 @@ model StartingPitcher {
   teamId   Int
   playerId Int
 
-  game   Game   @relation(fields: [gameId], references: [id])
-  team   Team   @relation(fields: [teamId], references: [id])
-  player Player @relation(fields: [playerId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId])
   @@map("starting_pitchers")
@@ -277,12 +294,53 @@ model BattingOrder {
   gameId   Int
   teamId   Int
   playerId Int
-  order    Int // 1 through 9
+  order    Int
 
-  game   Game   @relation(fields: [gameId], references: [id])
-  team   Team   @relation(fields: [teamId], references: [id])
-  player Player @relation(fields: [playerId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId, order])
   @@map("batting_orders")
+}
+
+model Venue {
+  id                       Int     @id @default(autoincrement())
+  name                     String  @db.VarChar(100)
+  mlb_api_id               Int     @unique
+  latitude                 Float
+  longitude                Float
+  address                  String  @db.VarChar(255)
+  city                     String  @db.VarChar(100)
+  state                    String  @db.VarChar(100)
+  zip                      String  @db.VarChar(10)
+  country                  String  @db.VarChar(100)
+  isIndoor                 Boolean @default(false)
+  capacity                 Int?
+  turfType                 String? @db.VarChar(100)
+  leftFieldDistance        Int?
+  leftCenterFieldDistance  Int?
+  centerFieldDistance      Int?
+  rightCenterFieldDistance Int?
+  rightFieldDistance       Int?
+  yearOpened               Int?
+  imageUrl                 String? @db.VarChar(255)
+  teamId                   Int?
+  Team                     Team[]
+
+  @@map("venues")
+}
+
+model TeamRecord {
+  id       Int   @id @default(autoincrement())
+  teamId   Int
+  seasonId Int
+  gameId   Int
+  wins     Int
+  losses   Int
+  pct      Float
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  season Season @relation(fields: [seasonId], references: [id])
+  game   Game   @relation(fields: [gameId], references: [id])
 }

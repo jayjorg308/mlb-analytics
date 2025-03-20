@@ -8,7 +8,9 @@
         "start": "next start",
         "lint": "next lint",
         "generate": "prisma generate",
-        "seed:players": "ts-node prisma/seedPlayers.ts"
+        "seed:players": "ts-node prisma/seedPlayers.ts",
+        "upload:headshots": "ts-node prisma/uploadHeadshots.ts",
+        "patch:players": "ts-node prisma/patchPlayers.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
@@ -20,7 +22,9 @@
         "@mui/material": "^6.4.7",
         "@mui/material-nextjs": "^6.4.3",
         "@prisma/client": "^6.5.0",
+        "aws-sdk": "^2.1692.0",
         "axios": "^1.8.4",
+        "dotenv": "^16.4.7",
         "next": "15.2.2",
         "node-fetch": "^3.3.2",
         "pg": "^8.14.0",
@@ -31,6 +35,7 @@
         "@eslint/eslintrc": "^3",
         "@tailwindcss/postcss": "^4.0.13",
         "@types/node": "^20.17.24",
+        "@types/node-fetch": "^2.6.12",
         "@types/pg": "^8.11.11",
         "@types/react": "^19",
         "@types/react-dom": "^19",
