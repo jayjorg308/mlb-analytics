@@ -9,6 +9,8 @@
         "lint": "next lint",
         "generate": "prisma generate",
         "seed:players": "ts-node prisma/seedPlayers.ts",
+        "seed:venues": "ts-node prisma/seedVenues.ts",
+        "seed:games": "ts-node prisma/seedGames.ts",
         "upload:headshots": "ts-node prisma/uploadHeadshots.ts",
         "patch:players": "ts-node prisma/patchPlayers.ts"
     },

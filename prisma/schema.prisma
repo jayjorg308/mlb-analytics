@@ -148,7 +148,7 @@ model Team {
   teamStats        TeamStats[]
   battingOrders    BattingOrder[]
   startingPitchers StartingPitcher[]
-  Venue            Venue[]
+  venue            Venue?            @relation(fields: [venue_id], references: [id], onDelete: SetNull)
   TeamRecord       TeamRecord[]
 
   @@map("teams")
@@ -305,28 +305,33 @@ model BattingOrder {
 }
 
 model Venue {
-  id                       Int     @id @default(autoincrement())
-  name                     String  @db.VarChar(100)
-  mlb_api_id               Int     @unique
-  latitude                 Float
-  longitude                Float
-  address                  String  @db.VarChar(255)
-  city                     String  @db.VarChar(100)
-  state                    String  @db.VarChar(100)
-  zip                      String  @db.VarChar(10)
-  country                  String  @db.VarChar(100)
-  isIndoor                 Boolean @default(false)
-  capacity                 Int?
-  turfType                 String? @db.VarChar(100)
-  leftFieldDistance        Int?
-  leftCenterFieldDistance  Int?
-  centerFieldDistance      Int?
-  rightCenterFieldDistance Int?
-  rightFieldDistance       Int?
-  yearOpened               Int?
-  imageUrl                 String? @db.VarChar(255)
-  teamId                   Int?
-  Team                     Team[]
+  id                         Int     @id @default(autoincrement())
+  name                       String  @db.VarChar(100)
+  mlb_api_id                 Int     @unique
+  latitude                   Float
+  longitude                  Float
+  address                    String  @db.VarChar(255)
+  city                       String  @db.VarChar(100)
+  state                      String  @db.VarChar(100)
+  zip                        String  @db.VarChar(10)
+  country                    String  @db.VarChar(100)
+  isIndoor                   Boolean @default(false)
+  capacity                   Int?
+  turfType                   String? @db.VarChar(100)
+  leftFieldDistance          Int?
+  leftCenterFieldDistance    Int?
+  centerFieldDistance        Int?
+  rightCenterFieldDistance   Int?
+  rightFieldDistance         Int?
+  yearOpened                 Int?
+  imageUrl                   String? @db.VarChar(255)
+  altitude                   Int?
+  leftFieldWallHeight        Int?
+  LeftCenterFieldWallHeight  Int?
+  CenterFieldWallHeight      Int?
+  RightCenterFieldWallHeight Int?
+  RightFieldWallHeight       Int?
+  Team                       Team[]
 
   @@map("venues")
 }

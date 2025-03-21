@@ -7,7 +7,7 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 
 export const MenuBar = () => {
     const router = useRouter();
-    const pages = ["MLB", "NBA"];
+    const pages = ["MLB"];
 
     const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 
