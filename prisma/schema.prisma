@@ -117,7 +117,7 @@ model Game {
   away_team_id    Int
   venue_id        Int
   game_type       GameType
-  game_date       DateTime   @db.Date
+  game_date       DateTime
   game_status     GameStatus
   is_neutral_site Boolean    @default(false)
   home_score      Int?
@@ -137,6 +137,7 @@ model Game {
   TeamGameBattingStats  TeamGameBattingStats[]
   TeamGamePitchingStats TeamGamePitchingStats[]
 
+  @@index([game_date])
   @@map("games")
 }
 
@@ -217,6 +218,7 @@ model Player {
   PlayerSeasonBattingStats  PlayerSeasonBattingStats[]
   PlayerSeasonPitchingStats PlayerSeasonPitchingStats[]
 
+  @@index([teamId])
   @@map("players")
 }
 
@@ -252,6 +254,8 @@ model BattingStats {
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, gameId])
+  @@index([playerId])
+  @@index([gameId])
   @@map("batting_stats")
 }
 
@@ -277,6 +281,8 @@ model PitchingStats {
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, gameId])
+  @@index([playerId])
+  @@index([gameId])
   @@map("pitching_stats")
 }
 
@@ -296,6 +302,8 @@ model TeamGameBattingStats {
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, gameId])
+  @@index([teamId])
+  @@index([gameId])
   @@map("team_game_batting_stats")
 }
 
@@ -315,6 +323,8 @@ model TeamGamePitchingStats {
   game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, gameId])
+  @@index([teamId])
+  @@index([gameId])
   @@map("team_game_pitching_stats")
 }
 
@@ -346,6 +356,7 @@ model Injury {
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
+  @@index([playerId])
   @@map("injuries")
 }
 
@@ -360,6 +371,7 @@ model StartingPitcher {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId])
+  @@index([playerId])
   @@map("starting_pitchers")
 }
 
@@ -375,6 +387,7 @@ model BattingOrder {
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId, order])
+  @@index([playerId])
   @@map("batting_orders")
 }
 
@@ -424,6 +437,7 @@ model TeamRecord {
   game   Game   @relation(fields: [gameId], references: [id])
 
   @@index([teamId, seasonId])
+  @@index([teamId])
   @@map("team_records")
 }
 
@@ -452,6 +466,7 @@ model PlayerSeasonBattingStats {
   season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, seasonId])
+  @@index([playerId])
   @@map("player_season_batting_stats")
 }
 
@@ -480,6 +495,7 @@ model PlayerSeasonPitchingStats {
   season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, seasonId])
+  @@index([playerId])
   @@map("player_season_pitching_stats")
 }
 
@@ -499,6 +515,7 @@ model TeamSeasonBattingStats {
   season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, seasonId])
+  @@index([teamId])
   @@map("team_season_batting_stats")
 }
 
@@ -518,6 +535,7 @@ model TeamSeasonPitchingStats {
   season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, seasonId])
+  @@index([teamId])
   @@map("team_season_pitching_stats")
 }
 
@@ -535,5 +553,7 @@ model GameInningStats {
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId, inningNumber])
+  @@index([teamId])
+  @@index([gameId])
   @@map("game_inning_stats")
 }
