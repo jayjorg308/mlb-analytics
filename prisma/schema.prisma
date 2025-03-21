@@ -41,6 +41,14 @@ enum GameType {
   A // All-Star Game
 }
 
+enum PitcherDecision {
+  WIN
+  LOSS
+  SAVE
+  HOLD
+  NONE
+}
+
 // MODELS
 model League {
   id           Int          @id @default(autoincrement())
@@ -211,7 +219,7 @@ model PlayerPosition {
 }
 
 model PlayerStats {
-  id             Int    @id @default(autoincrement())
+  id             Int              @id @default(autoincrement())
   playerId       Int
   gameId         Int
   atBats         Int?
@@ -221,8 +229,10 @@ model PlayerStats {
   rbis           Int?
   walks          Int?
   strikeouts     Int?
+  pitchesThrown  Int?
   inningsPitched Float?
   earnedRuns     Int?
+  decision       PitcherDecision?
 
   player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)

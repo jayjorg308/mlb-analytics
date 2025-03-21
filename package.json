@@ -12,7 +12,8 @@
         "seed:venues": "ts-node prisma/seedVenues.ts",
         "seed:games": "ts-node prisma/seedGames.ts",
         "upload:headshots": "ts-node prisma/uploadHeadshots.ts",
-        "patch:players": "ts-node prisma/patchPlayers.ts"
+        "patch:players": "ts-node prisma/patchPlayers.ts",
+        "log:game": "ts-node prisma/logGame.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",

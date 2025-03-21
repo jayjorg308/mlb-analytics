@@ -1,4 +1,4 @@
-import { PrismaClient, GameStatus } from "@prisma/client";
+import { GameStatus, PrismaClient } from "@prisma/client";
 import axios from "axios";
 
 const prisma = new PrismaClient();
@@ -22,6 +22,11 @@ async function updateGame(gamePk: number) {
         // Find internal team IDs based on mlb_api_id
         const homeTeam = await prisma.team.findUnique({ where: { mlb_api_id: homeTeamId } });
         const awayTeam = await prisma.team.findUnique({ where: { mlb_api_id: awayTeamId } });
+        const venue = await prisma.venue.findUnique({
+            where: { mlb_api_id: gameData.venue.id },
+            include: { Team: true },
+        });
+        const isNeutralSite = venue && venue.Team[0] == null;
 
         if (!homeTeam || !awayTeam) {
             throw new Error("Home or Away team not found in DB");
@@ -35,6 +40,7 @@ async function updateGame(gamePk: number) {
                 home_score: homeScore,
                 away_score: awayScore,
                 winner_team_id: winningTeamId === homeTeamId ? homeTeam.id : awayTeam.id,
+                is_neutral_site: isNeutralSite ?? false,
             },
         });
 
