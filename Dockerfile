@@ -11,6 +11,9 @@ RUN npm install
 # Copy app files
 COPY . .
 
+# Increase memory limit for Node.js processes
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 # Generate Prisma client
 RUN npx prisma generate
 
