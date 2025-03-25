@@ -62,7 +62,7 @@ model Game {
   awayTeam              Team              @relation("AwayTeam", fields: [awayTeamId], references: [id])
   homeScore             Int?
   awayScore             Int?
-  winningTeamId         Int?              @unique
+  winningTeamId         Int?
   startingPitcherHomeId Int?
   startingPitcherAwayId Int?
   // Lineups

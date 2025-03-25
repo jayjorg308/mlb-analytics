@@ -1,58 +1,66 @@
-// import { GameStatus, PrismaClient } from "@prisma/client";
-// import axios from "axios";
+import { PrismaClient, GameStatus } from "@prisma/client";
+import axios from "axios";
 
-// const prisma = new PrismaClient();
+const prisma = new PrismaClient();
 
-// async function updateGame(gamePk: number) {
-//     try {
-//         const { data } = await axios.get(`https://statsapi.mlb.com/api/v1.1/game/${gamePk}/feed/live`);
+const mapStatus = (statusCode: string): GameStatus => {
+    switch (statusCode) {
+        case "S":
+            return GameStatus.SCHEDULED;
+        case "F":
+            return GameStatus.FINAL;
+        default:
+            return GameStatus.SCHEDULED;
+    }
+};
 
-//         const gameData = data.gameData;
-//         const liveData = data.liveData;
-//         const gameStatus = gameData.status.detailedState; // e.g., "Final"
-//         const isFinal = gameStatus.toLowerCase().includes("final");
+async function logGame(gameId: number) {
+    try {
+        // Fetch MLB schedule from the API
+        const { data } = await axios.get(`https://statsapi.mlb.com/api/v1.1/game/${gameId}/feed/live`);
+        const { gameData, liveData } = data;
 
-//         const homeTeamId = gameData.teams.home.id;
-//         const awayTeamId = gameData.teams.away.id;
-//         const homeScore = liveData.linescore.teams.home.runs;
-//         const awayScore = liveData.linescore.teams.away.runs;
+        // Get mlb_api_ids
+        const homeTeamApiId = gameData.teams.home.id;
+        const awayTeamApiId = gameData.teams.away.id;
 
-//         const winningTeamId = homeScore > awayScore ? homeTeamId : awayTeamId;
+        // Lookup corresponding DB IDs
+        const homeTeam = await prisma.team.findUnique({
+            where: { mlb_api_id: homeTeamApiId },
+        });
 
-//         // Find internal team IDs based on mlb_api_id
-//         const homeTeam = await prisma.team.findUnique({ where: { mlb_api_id: homeTeamId } });
-//         const awayTeam = await prisma.team.findUnique({ where: { mlb_api_id: awayTeamId } });
-//         const venue = await prisma.venue.findUnique({
-//             where: { mlb_api_id: gameData.venue.id },
-//             include: { Team: true },
-//         });
-//         const isNeutralSite = venue && venue.Team[0] == null;
+        const awayTeam = await prisma.team.findUnique({
+            where: { mlb_api_id: awayTeamApiId },
+        });
 
-//         if (!homeTeam || !awayTeam) {
-//             throw new Error("Home or Away team not found in DB");
-//         }
+        const homeScore = liveData.boxscore.teams.home.teamStats.batting.runs;
+        const awayScore = liveData.boxscore.teams.away.teamStats.batting.runs;
+        const winningTeamId = homeScore > awayScore ? homeTeam?.id : awayTeam?.id;
 
-//         // Update the Game record
-//         await prisma.game.update({
-//             where: { mlb_api_id: gamePk },
-//             data: {
-//                 game_status: isFinal ? GameStatus.FINAL : GameStatus.IN_PROGRESS,
-//                 home_score: homeScore,
-//                 away_score: awayScore,
-//                 winner_team_id: winningTeamId === homeTeamId ? homeTeam.id : awayTeam.id,
-//                 is_neutral_site: isNeutralSite ?? false,
-//             },
-//         });
+        // Update game in the database
+        await prisma.game.update({
+            where: { mlb_api_id: gameId },
+            data: {
+                status: mapStatus(gameData.status.statusCode),
+                homeScore: homeScore,
+                awayScore: awayScore,
+                winningTeamId: winningTeamId,
+            },
+        });
 
-//         console.log(`Updated game ${gamePk} with final score ${homeScore}-${awayScore}`);
+        console.log(`Updated game ${gameId}`);
 
-//         // --- Optionally handle TeamStats & PlayerStats here ---
-//     } catch (error) {
-//         console.error(`Error updating game ${gamePk}:`, error);
-//     } finally {
-//         await prisma.$disconnect();
-//     }
-// }
+        console.log("✅ Finished logging game.");
+    } catch (error) {
+        console.error("❌ Error logging game:", error);
+    } finally {
+        await prisma.$disconnect();
+    }
+}
 
-// // Test run with 778563
-// updateGame(778563);
+// 778563
+
+// 778564
+
+const gameId = 778564;
+logGame(gameId);

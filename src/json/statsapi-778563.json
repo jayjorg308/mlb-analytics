@@ -813,7 +813,7 @@
                 "initLastName": "M Amaya",
                 "fullFMLName": "Miguel Antonio Amaya",
                 "fullLFMName": "Amaya, Miguel Antonio",
-                "strikeZoneTop": 3.4,
+                "strikeZoneTop": 3.41,
                 "strikeZoneBottom": 1.63
             },
             "ID656945": {
@@ -865,6 +865,55 @@
                 "fullLFMName": "Scott, Tanner Alexander",
                 "strikeZoneTop": 3.371,
                 "strikeZoneBottom": 1.535
+            },
+            "ID669422": {
+                "id": 669422,
+                "fullName": "Matt Sauer",
+                "link": "/api/v1/people/669422",
+                "firstName": "Matthew",
+                "lastName": "Sauer",
+                "primaryNumber": "64",
+                "birthDate": "1999-01-21",
+                "currentAge": 26,
+                "birthCity": "Santa Maria",
+                "birthStateProvince": "CA",
+                "birthCountry": "USA",
+                "height": "6' 4\"",
+                "weight": 230,
+                "active": true,
+                "primaryPosition": {
+                    "code": "1",
+                    "name": "Pitcher",
+                    "type": "Pitcher",
+                    "abbreviation": "P"
+                },
+                "useName": "Matt",
+                "useLastName": "Sauer",
+                "middleName": "David",
+                "boxscoreName": "Sauer",
+                "gender": "M",
+                "isPlayer": true,
+                "isVerified": false,
+                "draftYear": 2017,
+                "mlbDebutDate": "2024-03-31",
+                "batSide": {
+                    "code": "R",
+                    "description": "Right"
+                },
+                "pitchHand": {
+                    "code": "R",
+                    "description": "Right"
+                },
+                "nameFirstLast": "Matt Sauer",
+                "nameSlug": "matt-sauer-669422",
+                "firstLastName": "Matt Sauer",
+                "lastFirstName": "Sauer, Matt",
+                "lastInitName": "Sauer, M",
+                "initLastName": "M Sauer",
+                "fullFMLName": "Matthew David Sauer",
+                "fullLFMName": "Sauer, Matthew David",
+                "strikeZoneTop": 3.549,
+                "strikeZoneBottom": 1.627
             },
             "ID673548": {
                 "id": 673548,
@@ -1356,7 +1405,7 @@
                 "fullFMLName": "Miguel Elias Rojas",
                 "fullLFMName": "Rojas, Miguel Elias",
                 "strikeZoneTop": 3.12,
-                "strikeZoneBottom": 1.52
+                "strikeZoneBottom": 1.51
             },
             "ID663878": {
                 "id": 663878,
@@ -1437,6 +1486,7 @@
                 "isPlayer": true,
                 "isVerified": true,
                 "draftYear": 2021,
+                "mlbDebutDate": "2025-03-19",
                 "batSide": {
                     "code": "R",
                     "description": "Right"
@@ -2056,7 +2106,7 @@
                 "lastName": "Crow-Armstrong",
                 "primaryNumber": "4",
                 "birthDate": "2002-03-25",
-                "currentAge": 22,
+                "currentAge": 23,
                 "birthCity": "Sherman Oaks",
                 "birthStateProvince": "CA",
                 "birthCountry": "USA",
@@ -2195,55 +2245,6 @@
                 "fullLFMName": "Ohtani, Shohei",
                 "strikeZoneTop": 3.4,
                 "strikeZoneBottom": 1.62
-            },
-            "ID680736": {
-                "id": 680736,
-                "fullName": "Justin Wrobleski",
-                "link": "/api/v1/people/680736",
-                "firstName": "Justin",
-                "lastName": "Wrobleski",
-                "primaryNumber": "70",
-                "birthDate": "2000-07-14",
-                "currentAge": 24,
-                "birthCity": "Hoffman Estates",
-                "birthStateProvince": "IL",
-                "birthCountry": "USA",
-                "height": "6' 1\"",
-                "weight": 194,
-                "active": true,
-                "primaryPosition": {
-                    "code": "1",
-                    "name": "Pitcher",
-                    "type": "Pitcher",
-                    "abbreviation": "P"
-                },
-                "useName": "Justin",
-                "useLastName": "Wrobleski",
-                "middleName": "Michael",
-                "boxscoreName": "Wrobleski",
-                "gender": "M",
-                "isPlayer": true,
-                "isVerified": true,
-                "draftYear": 2021,
-                "mlbDebutDate": "2024-07-07",
-                "batSide": {
-                    "code": "L",
-                    "description": "Left"
-                },
-                "pitchHand": {
-                    "code": "L",
-                    "description": "Left"
-                },
-                "nameFirstLast": "Justin Wrobleski",
-                "nameSlug": "justin-wrobleski-680736",
-                "firstLastName": "Justin Wrobleski",
-                "lastFirstName": "Wrobleski, Justin",
-                "lastInitName": "Wrobleski, J",
-                "initLastName": "J Wrobleski",
-                "fullFMLName": "Justin Michael Wrobleski",
-                "fullLFMName": "Wrobleski, Justin Michael",
-                "strikeZoneTop": 3.411,
-                "strikeZoneBottom": 1.565
             },
             "ID606192": {
                 "id": 606192,
@@ -2547,7 +2548,7 @@
                 "lastName": "Yates",
                 "primaryNumber": "38",
                 "birthDate": "1987-03-25",
-                "currentAge": 37,
+                "currentAge": 38,
                 "birthCity": "Lihue",
                 "birthStateProvince": "HI",
                 "birthCountry": "USA",
@@ -2811,6 +2812,7 @@
                 "gender": "M",
                 "isPlayer": true,
                 "isVerified": true,
+                "mlbDebutDate": "2025-03-19",
                 "batSide": {
                     "code": "R",
                     "description": "Right"
@@ -34923,13 +34925,13 @@
                                     "splits": [
                                         {
                                             "stat": {
-                                                "name": "exitVelocity",
+                                                "name": "onBasePlusSlugging",
                                                 "zones": [
                                                     {
                                                         "zone": "01",
                                                         "color": "rgba(6, 90, 238, .55)",
                                                         "temp": "cold",
-                                                        "value": "75.28"
+                                                        "value": ".000"
                                                     },
                                                     {
                                                         "zone": "02",
@@ -34939,9 +34941,9 @@
                                                     },
                                                     {
                                                         "zone": "03",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     },
                                                     {
                                                         "zone": "04",
@@ -34969,15 +34971,15 @@
                                                     },
                                                     {
                                                         "zone": "08",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(214, 41, 52, .55)",
+                                                        "temp": "hot",
+                                                        "value": "2.000"
                                                     },
                                                     {
                                                         "zone": "09",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     },
                                                     {
                                                         "zone": "11",
@@ -34993,15 +34995,15 @@
                                                     },
                                                     {
                                                         "zone": "13",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     },
                                                     {
                                                         "zone": "14",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     }
                                                 ]
                                             }
@@ -35054,15 +35056,15 @@
                                                     },
                                                     {
                                                         "zone": "08",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(214, 41, 52, .55)",
+                                                        "temp": "hot",
+                                                        "value": "1.000"
                                                     },
                                                     {
                                                         "zone": "09",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     },
                                                     {
                                                         "zone": "11",
@@ -35084,22 +35086,22 @@
                                                     },
                                                     {
                                                         "zone": "14",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": ".000"
                                                     }
                                                 ]
                                             }
                                         },
                                         {
                                             "stat": {
-                                                "name": "onBasePlusSlugging",
+                                                "name": "exitVelocity",
                                                 "zones": [
                                                     {
                                                         "zone": "01",
                                                         "color": "rgba(6, 90, 238, .55)",
                                                         "temp": "cold",
-                                                        "value": ".000"
+                                                        "value": "75.28"
                                                     },
                                                     {
                                                         "zone": "02",
@@ -35109,9 +35111,9 @@
                                                     },
                                                     {
                                                         "zone": "03",
-                                                        "color": "rgba(6, 90, 238, .55)",
-                                                        "temp": "cold",
-                                                        "value": ".000"
+                                                        "color": "rgba(214, 41, 52, .55)",
+                                                        "temp": "hot",
+                                                        "value": "96.60"
                                                     },
                                                     {
                                                         "zone": "04",
@@ -35139,9 +35141,9 @@
                                                     },
                                                     {
                                                         "zone": "08",
-                                                        "color": "rgba(255, 255, 255, 0.55)",
-                                                        "temp": "lukewarm",
-                                                        "value": "-"
+                                                        "color": "rgba(6, 90, 238, .55)",
+                                                        "temp": "cold",
+                                                        "value": "82.54"
                                                     },
                                                     {
                                                         "zone": "09",
@@ -35165,7 +35167,7 @@
                                                         "zone": "13",
                                                         "color": "rgba(6, 90, 238, .55)",
                                                         "temp": "cold",
-                                                        "value": ".000"
+                                                        "value": "51.78"
                                                     },
                                                     {
                                                         "zone": "14",
@@ -35225,15 +35227,15 @@
                             },
                             {
                                 "zone": "08",
-                                "color": "rgba(255, 255, 255, 0.55)",
-                                "temp": "lukewarm",
-                                "value": "-"
+                                "color": "rgba(214, 41, 52, .55)",
+                                "temp": "hot",
+                                "value": "2.000"
                             },
                             {
                                 "zone": "09",
-                                "color": "rgba(255, 255, 255, 0.55)",
-                                "temp": "lukewarm",
-                                "value": "-"
+                                "color": "rgba(6, 90, 238, .55)",
+                                "temp": "cold",
+                                "value": ".000"
                             },
                             {
                                 "zone": "11",
@@ -35255,9 +35257,9 @@
                             },
                             {
                                 "zone": "14",
-                                "color": "rgba(255, 255, 255, 0.55)",
-                                "temp": "lukewarm",
-                                "value": "-"
+                                "color": "rgba(6, 90, 238, .55)",
+                                "temp": "cold",
+                                "value": ".000"
                             }
                         ],
                         "pitcherHotColdZones": [],
@@ -35616,13 +35618,13 @@
                                 "splits": [
                                     {
                                         "stat": {
-                                            "name": "exitVelocity",
+                                            "name": "onBasePlusSlugging",
                                             "zones": [
                                                 {
                                                     "zone": "01",
                                                     "color": "rgba(6, 90, 238, .55)",
                                                     "temp": "cold",
-                                                    "value": "75.28"
+                                                    "value": ".000"
                                                 },
                                                 {
                                                     "zone": "02",
@@ -35632,9 +35634,9 @@
                                                 },
                                                 {
                                                     "zone": "03",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 },
                                                 {
                                                     "zone": "04",
@@ -35662,15 +35664,15 @@
                                                 },
                                                 {
                                                     "zone": "08",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(214, 41, 52, .55)",
+                                                    "temp": "hot",
+                                                    "value": "2.000"
                                                 },
                                                 {
                                                     "zone": "09",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 },
                                                 {
                                                     "zone": "11",
@@ -35686,15 +35688,15 @@
                                                 },
                                                 {
                                                     "zone": "13",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 },
                                                 {
                                                     "zone": "14",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 }
                                             ]
                                         }
@@ -35747,15 +35749,15 @@
                                                 },
                                                 {
                                                     "zone": "08",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(214, 41, 52, .55)",
+                                                    "temp": "hot",
+                                                    "value": "1.000"
                                                 },
                                                 {
                                                     "zone": "09",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 },
                                                 {
                                                     "zone": "11",
@@ -35777,22 +35779,22 @@
                                                 },
                                                 {
                                                     "zone": "14",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": ".000"
                                                 }
                                             ]
                                         }
                                     },
                                     {
                                         "stat": {
-                                            "name": "onBasePlusSlugging",
+                                            "name": "exitVelocity",
                                             "zones": [
                                                 {
                                                     "zone": "01",
                                                     "color": "rgba(6, 90, 238, .55)",
                                                     "temp": "cold",
-                                                    "value": ".000"
+                                                    "value": "75.28"
                                                 },
                                                 {
                                                     "zone": "02",
@@ -35802,9 +35804,9 @@
                                                 },
                                                 {
                                                     "zone": "03",
-                                                    "color": "rgba(6, 90, 238, .55)",
-                                                    "temp": "cold",
-                                                    "value": ".000"
+                                                    "color": "rgba(214, 41, 52, .55)",
+                                                    "temp": "hot",
+                                                    "value": "96.60"
                                                 },
                                                 {
                                                     "zone": "04",
@@ -35832,9 +35834,9 @@
                                                 },
                                                 {
                                                     "zone": "08",
-                                                    "color": "rgba(255, 255, 255, 0.55)",
-                                                    "temp": "lukewarm",
-                                                    "value": "-"
+                                                    "color": "rgba(6, 90, 238, .55)",
+                                                    "temp": "cold",
+                                                    "value": "82.54"
                                                 },
                                                 {
                                                     "zone": "09",
@@ -35858,7 +35860,7 @@
                                                     "zone": "13",
                                                     "color": "rgba(6, 90, 238, .55)",
                                                     "temp": "cold",
-                                                    "value": ".000"
+                                                    "value": "51.78"
                                                 },
                                                 {
                                                     "zone": "14",
@@ -35918,15 +35920,15 @@
                         },
                         {
                             "zone": "08",
-                            "color": "rgba(255, 255, 255, 0.55)",
-                            "temp": "lukewarm",
-                            "value": "-"
+                            "color": "rgba(214, 41, 52, .55)",
+                            "temp": "hot",
+                            "value": "2.000"
                         },
                         {
                             "zone": "09",
-                            "color": "rgba(255, 255, 255, 0.55)",
-                            "temp": "lukewarm",
-                            "value": "-"
+                            "color": "rgba(6, 90, 238, .55)",
+                            "temp": "cold",
+                            "value": ".000"
                         },
                         {
                             "zone": "11",
@@ -35948,9 +35950,9 @@
                         },
                         {
                             "zone": "14",
-                            "color": "rgba(255, 255, 255, 0.55)",
-                            "temp": "lukewarm",
-                            "value": "-"
+                            "color": "rgba(6, 90, 238, .55)",
+                            "temp": "cold",
+                            "value": ".000"
                         }
                     ],
                     "pitcherHotColdZones": [],
@@ -40347,6 +40349,151 @@
                                 }
                             ]
                         },
+                        "ID669422": {
+                            "person": {
+                                "id": 669422,
+                                "fullName": "Matt Sauer",
+                                "link": "/api/v1/people/669422"
+                            },
+                            "jerseyNumber": "64",
+                            "position": {
+                                "code": "1",
+                                "name": "Pitcher",
+                                "type": "Pitcher",
+                                "abbreviation": "P"
+                            },
+                            "status": {
+                                "code": "A",
+                                "description": "Active"
+                            },
+                            "parentTeamId": 119,
+                            "stats": {
+                                "batting": {},
+                                "pitching": {},
+                                "fielding": {}
+                            },
+                            "seasonStats": {
+                                "batting": {
+                                    "gamesPlayed": 0,
+                                    "flyOuts": 0,
+                                    "groundOuts": 0,
+                                    "airOuts": 0,
+                                    "runs": 0,
+                                    "doubles": 0,
+                                    "triples": 0,
+                                    "homeRuns": 0,
+                                    "strikeOuts": 0,
+                                    "baseOnBalls": 0,
+                                    "intentionalWalks": 0,
+                                    "hits": 0,
+                                    "hitByPitch": 0,
+                                    "avg": ".000",
+                                    "atBats": 0,
+                                    "obp": ".000",
+                                    "slg": ".000",
+                                    "ops": ".000",
+                                    "caughtStealing": 0,
+                                    "stolenBases": 0,
+                                    "stolenBasePercentage": ".---",
+                                    "groundIntoDoublePlay": 0,
+                                    "groundIntoTriplePlay": 0,
+                                    "plateAppearances": 0,
+                                    "totalBases": 0,
+                                    "rbi": 0,
+                                    "leftOnBase": 0,
+                                    "sacBunts": 0,
+                                    "sacFlies": 0,
+                                    "babip": ".---",
+                                    "groundOutsToAirouts": "-.--",
+                                    "catchersInterference": 0,
+                                    "pickoffs": 0,
+                                    "atBatsPerHomeRun": "-.--",
+                                    "popOuts": 0,
+                                    "lineOuts": 0
+                                },
+                                "pitching": {
+                                    "gamesPlayed": 0,
+                                    "gamesStarted": 0,
+                                    "flyOuts": 0,
+                                    "groundOuts": 0,
+                                    "airOuts": 0,
+                                    "runs": 0,
+                                    "doubles": 0,
+                                    "triples": 0,
+                                    "homeRuns": 0,
+                                    "strikeOuts": 0,
+                                    "baseOnBalls": 0,
+                                    "intentionalWalks": 0,
+                                    "hits": 0,
+                                    "hitByPitch": 0,
+                                    "atBats": 0,
+                                    "obp": ".000",
+                                    "caughtStealing": 0,
+                                    "stolenBases": 0,
+                                    "stolenBasePercentage": ".---",
+                                    "numberOfPitches": 0,
+                                    "era": "-.--",
+                                    "inningsPitched": "0.0",
+                                    "wins": 0,
+                                    "losses": 0,
+                                    "saves": 0,
+                                    "saveOpportunities": 0,
+                                    "holds": 0,
+                                    "blownSaves": 0,
+                                    "earnedRuns": 0,
+                                    "whip": "-",
+                                    "battersFaced": 0,
+                                    "outs": 0,
+                                    "gamesPitched": 0,
+                                    "completeGames": 0,
+                                    "shutouts": 0,
+                                    "balls": 0,
+                                    "strikes": 0,
+                                    "strikePercentage": "-.--",
+                                    "hitBatsmen": 0,
+                                    "balks": 0,
+                                    "wildPitches": 0,
+                                    "pickoffs": 0,
+                                    "groundOutsToAirouts": "-.--",
+                                    "rbi": 0,
+                                    "winPercentage": ".---",
+                                    "pitchesPerInning": "-.--",
+                                    "gamesFinished": 0,
+                                    "strikeoutWalkRatio": "-.--",
+                                    "strikeoutsPer9Inn": "-.--",
+                                    "walksPer9Inn": "-.--",
+                                    "hitsPer9Inn": "-.--",
+                                    "runsScoredPer9": "-.--",
+                                    "homeRunsPer9": "-.--",
+                                    "inheritedRunners": 0,
+                                    "inheritedRunnersScored": 0,
+                                    "catchersInterference": 0,
+                                    "sacBunts": 0,
+                                    "sacFlies": 0,
+                                    "passedBall": 0,
+                                    "popOuts": 0,
+                                    "lineOuts": 0
+                                },
+                                "fielding": {
+                                    "caughtStealing": 0,
+                                    "stolenBases": 0,
+                                    "stolenBasePercentage": ".---",
+                                    "assists": 0,
+                                    "putOuts": 0,
+                                    "errors": 0,
+                                    "chances": 0,
+                                    "fielding": ".000",
+                                    "passedBall": 0,
+                                    "pickoffs": 0
+                                }
+                            },
+                            "gameStatus": {
+                                "isCurrentBatter": false,
+                                "isCurrentPitcher": false,
+                                "isOnBench": true,
+                                "isSubstitute": false
+                            }
+                        },
                         "ID669242": {
                             "person": {
                                 "id": 669242,
@@ -40742,151 +40889,6 @@
                                     "abbreviation": "DH"
                                 }
                             ]
-                        },
-                        "ID680736": {
-                            "person": {
-                                "id": 680736,
-                                "fullName": "Justin Wrobleski",
-                                "link": "/api/v1/people/680736"
-                            },
-                            "jerseyNumber": "70",
-                            "position": {
-                                "code": "1",
-                                "name": "Pitcher",
-                                "type": "Pitcher",
-                                "abbreviation": "P"
-                            },
-                            "status": {
-                                "code": "A",
-                                "description": "Active"
-                            },
-                            "parentTeamId": 119,
-                            "stats": {
-                                "batting": {},
-                                "pitching": {},
-                                "fielding": {}
-                            },
-                            "seasonStats": {
-                                "batting": {
-                                    "gamesPlayed": 0,
-                                    "flyOuts": 0,
-                                    "groundOuts": 0,
-                                    "airOuts": 0,
-                                    "runs": 0,
-                                    "doubles": 0,
-                                    "triples": 0,
-                                    "homeRuns": 0,
-                                    "strikeOuts": 0,
-                                    "baseOnBalls": 0,
-                                    "intentionalWalks": 0,
-                                    "hits": 0,
-                                    "hitByPitch": 0,
-                                    "avg": ".000",
-                                    "atBats": 0,
-                                    "obp": ".000",
-                                    "slg": ".000",
-                                    "ops": ".000",
-                                    "caughtStealing": 0,
-                                    "stolenBases": 0,
-                                    "stolenBasePercentage": ".---",
-                                    "groundIntoDoublePlay": 0,
-                                    "groundIntoTriplePlay": 0,
-                                    "plateAppearances": 0,
-                                    "totalBases": 0,
-                                    "rbi": 0,
-                                    "leftOnBase": 0,
-                                    "sacBunts": 0,
-                                    "sacFlies": 0,
-                                    "babip": ".---",
-                                    "groundOutsToAirouts": "-.--",
-                                    "catchersInterference": 0,
-                                    "pickoffs": 0,
-                                    "atBatsPerHomeRun": "-.--",
-                                    "popOuts": 0,
-                                    "lineOuts": 0
-                                },
-                                "pitching": {
-                                    "gamesPlayed": 0,
-                                    "gamesStarted": 0,
-                                    "flyOuts": 0,
-                                    "groundOuts": 0,
-                                    "airOuts": 0,
-                                    "runs": 0,
-                                    "doubles": 0,
-                                    "triples": 0,
-                                    "homeRuns": 0,
-                                    "strikeOuts": 0,
-                                    "baseOnBalls": 0,
-                                    "intentionalWalks": 0,
-                                    "hits": 0,
-                                    "hitByPitch": 0,
-                                    "atBats": 0,
-                                    "obp": ".000",
-                                    "caughtStealing": 0,
-                                    "stolenBases": 0,
-                                    "stolenBasePercentage": ".---",
-                                    "numberOfPitches": 0,
-                                    "era": "-.--",
-                                    "inningsPitched": "0.0",
-                                    "wins": 0,
-                                    "losses": 0,
-                                    "saves": 0,
-                                    "saveOpportunities": 0,
-                                    "holds": 0,
-                                    "blownSaves": 0,
-                                    "earnedRuns": 0,
-                                    "whip": "-",
-                                    "battersFaced": 0,
-                                    "outs": 0,
-                                    "gamesPitched": 0,
-                                    "completeGames": 0,
-                                    "shutouts": 0,
-                                    "balls": 0,
-                                    "strikes": 0,
-                                    "strikePercentage": "-.--",
-                                    "hitBatsmen": 0,
-                                    "balks": 0,
-                                    "wildPitches": 0,
-                                    "pickoffs": 0,
-                                    "groundOutsToAirouts": "-.--",
-                                    "rbi": 0,
-                                    "winPercentage": ".---",
-                                    "pitchesPerInning": "-.--",
-                                    "gamesFinished": 0,
-                                    "strikeoutWalkRatio": "-.--",
-                                    "strikeoutsPer9Inn": "-.--",
-                                    "walksPer9Inn": "-.--",
-                                    "hitsPer9Inn": "-.--",
-                                    "runsScoredPer9": "-.--",
-                                    "homeRunsPer9": "-.--",
-                                    "inheritedRunners": 0,
-                                    "inheritedRunnersScored": 0,
-                                    "catchersInterference": 0,
-                                    "sacBunts": 0,
-                                    "sacFlies": 0,
-                                    "passedBall": 0,
-                                    "popOuts": 0,
-                                    "lineOuts": 0
-                                },
-                                "fielding": {
-                                    "caughtStealing": 0,
-                                    "stolenBases": 0,
-                                    "stolenBasePercentage": ".---",
-                                    "assists": 0,
-                                    "putOuts": 0,
-                                    "errors": 0,
-                                    "chances": 0,
-                                    "fielding": ".000",
-                                    "passedBall": 0,
-                                    "pickoffs": 0
-                                }
-                            },
-                            "gameStatus": {
-                                "isCurrentBatter": false,
-                                "isCurrentPitcher": false,
-                                "isOnBench": true,
-                                "isSubstitute": false
-                            }
                         },
                         "ID606192": {
                             "person": {
@@ -43239,7 +43241,7 @@
                     ],
                     "pitchers": [808967, 607455, 676508, 595014, 656945],
                     "bench": [605131, 605141, 518692, 681546, 621035],
-                    "bullpen": [676263, 472610, 607192, 689017, 669160, 808963, 605483, 681911, 680736, 489446],
+                    "bullpen": [676263, 472610, 607192, 689017, 669160, 808963, 669422, 605483, 681911, 489446],
                     "battingOrder": [660271, 669242, 606192, 669257, 571970, 571771, 624424, 500743, 681624],
                     "info": [
                         {

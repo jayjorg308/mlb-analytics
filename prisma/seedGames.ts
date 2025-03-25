@@ -7,6 +7,8 @@ const mapStatus = (statusCode: string): GameStatus => {
     switch (statusCode) {
         case "S":
             return GameStatus.SCHEDULED;
+        case "P":
+            return GameStatus.POSTPONED;
         case "F":
             return GameStatus.FINAL;
         default:
