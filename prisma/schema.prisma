@@ -70,6 +70,7 @@ model Game {
   battingOrderAway      String[]
   // Participants
   playerStats           PlayerGameStats[]
+  Weather               Weather?
 
   @@index(date)
   @@index(homeTeamId)
@@ -184,4 +185,14 @@ model Venue {
   country    String  @db.VarChar(100)
   isIndoor   Boolean @default(false)
   games      Game[]
+}
+
+model Weather {
+  id              Int     @id @default(autoincrement())
+  gameId          Int     @unique
+  game            Game    @relation(fields: [gameId], references: [id])
+  lowTemperature  Int?
+  highTemperature Int?
+  condition       String? @db.VarChar(100)
+  windSpeed       Int?
 }
