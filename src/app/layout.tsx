@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+"use client";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import { Geist, Geist_Mono } from "next/font/google";
 import theme from "./theme";
-import { Box } from "@mui/material";
+import { Box, CssBaseline } from "@mui/material";
 import { MenuBar } from "./components/MenuBar";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -16,11 +18,6 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-    title: "Gamblers Anonymous",
-    description: "Not the actual one.",
-};
-
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -28,11 +25,14 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            <body style={{ margin: 0 }} className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <AppRouterCacheProvider>
                     <ThemeProvider theme={theme}>
-                        <MenuBar />
-                        <Box>{children}</Box>
+                        <CssBaseline />
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <MenuBar />
+                            <Box>{children}</Box>
+                        </LocalizationProvider>
                     </ThemeProvider>
                 </AppRouterCacheProvider>
             </body>

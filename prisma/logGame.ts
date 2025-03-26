@@ -35,7 +35,6 @@ async function logGame(gameId: number) {
 
         const homeScore = liveData.boxscore.teams.home.teamStats.batting.runs;
         const awayScore = liveData.boxscore.teams.away.teamStats.batting.runs;
-        const winningTeamId = homeScore > awayScore ? homeTeam?.id : awayTeam?.id;
 
         // Update game in the database
         await prisma.game.update({
@@ -44,7 +43,7 @@ async function logGame(gameId: number) {
                 status: mapStatus(gameData.status.statusCode),
                 homeScore: homeScore,
                 awayScore: awayScore,
-                winningTeamId: winningTeamId,
+                winningTeamId: homeScore > awayScore ? homeTeam?.id : awayTeam?.id,
             },
         });
 

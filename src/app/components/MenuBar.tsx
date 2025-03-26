@@ -1,117 +1,65 @@
 "use client";
-import { AppBar, Box, Button, Container, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { AppBar, Toolbar, Typography, Box, Button, IconButton, Menu, MenuItem } from "@mui/material";
+import Link from "next/link";
+import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
-import { faBars } from "@fortawesome/free-solid-svg-icons";
 
 export const MenuBar = () => {
-    const router = useRouter();
-    const pages = ["MLB"];
-
-    const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
-
-    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElNav(event.currentTarget);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
     };
-
-    const handleNavigation = (page: string) => {
-        router.push(`/${page.toLowerCase()}`);
-        setAnchorElNav(null);
-    };
-
-    const handleCloseNavMenu = () => {
-        setAnchorElNav(null);
+    const handleMenuClose = () => {
+        setAnchorEl(null);
     };
 
     return (
-        <AppBar position="static">
-            <Container maxWidth="xl">
-                <Toolbar disableGutters>
-                    <Typography
-                        variant="h6"
-                        noWrap
-                        onClick={() => router.push("/")}
-                        sx={{
-                            mr: 2,
-                            display: { xs: "none", md: "flex" },
-                            fontFamily: "monospace",
-                            fontWeight: 700,
-                            letterSpacing: ".3rem",
-                            color: "inherit",
-                            textDecoration: "none",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Gamblers Anonymous
-                    </Typography>
+        <AppBar position="sticky" color="primary">
+            <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+                {/* Styled Site Name */}
+                <Typography
+                    variant="h6"
+                    component={Link}
+                    href="/"
+                    sx={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        //fontFamily: "Oswald, sans-serif",
+                        fontWeight: 700,
+                        fontSize: "1.5rem",
+                    }}
+                >
+                    Gamblers Anonymous
+                </Typography>
 
-                    <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-                        <IconButton
-                            size="large"
-                            aria-label="account of current user"
-                            aria-controls="menu-appbar"
-                            aria-haspopup="true"
-                            onClick={handleOpenNavMenu}
-                            color="inherit"
-                        >
-                            <FontAwesomeIcon icon={faBars} style={{ color: "white" }} />
-                        </IconButton>
-                        <Menu
-                            id="menu-appbar"
-                            anchorEl={anchorElNav}
-                            anchorOrigin={{
-                                vertical: "bottom",
-                                horizontal: "left",
-                            }}
-                            keepMounted
-                            transformOrigin={{
-                                vertical: "top",
-                                horizontal: "left",
-                            }}
-                            open={Boolean(anchorElNav)}
-                            onClose={handleCloseNavMenu}
-                            sx={{ display: { xs: "block", md: "none" } }}
-                        >
-                            {pages.map((page) => (
-                                <MenuItem key={page} onClick={() => handleNavigation(page)}>
-                                    <Typography sx={{ textAlign: "center" }}>{page}</Typography>
-                                </MenuItem>
-                            ))}
-                        </Menu>
-                    </Box>
-                    <Typography
-                        variant="h5"
-                        noWrap
-                        onClick={() => router.push("/")}
-                        sx={{
-                            mr: 2,
-                            display: { xs: "flex", md: "none" },
-                            flexGrow: 1,
-                            fontFamily: "monospace",
-                            fontWeight: 700,
-                            fontSize: "1.3rem",
-                            letterSpacing: ".3rem",
-                            color: "inherit",
-                            textDecoration: "none",
-                            cursor: "pointer",
-                        }}
-                    >
-                        Gamblers Anonymous
-                    </Typography>
-                    <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-                        {pages.map((page) => (
-                            <Button
-                                key={page}
-                                onClick={() => handleNavigation(page)}
-                                sx={{ my: 2, color: "white", display: "block" }}
-                            >
-                                {page}
-                            </Button>
-                        ))}
-                    </Box>
-                </Toolbar>
-            </Container>
+                {/* Desktop Links (Hidden on Small Screens) */}
+                <Box sx={{ display: { xs: "none", md: "flex" } }}>
+                    <Button color="inherit" component={Link} href="/stats">
+                        Stats
+                    </Button>
+                    <Button color="inherit" component={Link} href="/teams">
+                        Teams
+                    </Button>
+                </Box>
+
+                {/* Mobile Dropdown (Visible on Small Screens) */}
+                <IconButton color="inherit" sx={{ display: { xs: "flex", md: "none" } }} onClick={handleMenuOpen}>
+                    <MenuIcon />
+                </IconButton>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    sx={{ display: { xs: "block", md: "none" } }}
+                >
+                    <MenuItem component={Link} href="/stats" onClick={handleMenuClose}>
+                        Stats
+                    </MenuItem>
+                    <MenuItem component={Link} href="/teams" onClick={handleMenuClose}>
+                        Teams
+                    </MenuItem>
+                </Menu>
+            </Toolbar>
         </AppBar>
     );
 };
