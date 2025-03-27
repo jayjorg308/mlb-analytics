@@ -8,6 +8,7 @@
         "start": "next start",
         "lint": "next lint",
         "generate": "prisma generate",
+        "update:gameParticipants": "ts-node prisma/updateGameParticipants.ts",
         "log:game": "ts-node prisma/logGame.ts"
     },
     "dependencies": {

@@ -57,7 +57,7 @@ async function seedGames() {
                         mlb_api_id: gamePk,
                         season_id: 1,
                         venue_id: venueRecord.id,
-                        date: gameDate,
+                        date: new Date(gameDate),
                         status: mapStatus(status.statusCode),
                         homeTeamId: homeTeam.id,
                         awayTeamId: awayTeam.id,

@@ -61,5 +61,5 @@ async function logGame(gameId: number) {
 
 // 778564
 
-const gameId = 778564;
+const gameId = 778563;
 logGame(gameId);

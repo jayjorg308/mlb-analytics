@@ -24,7 +24,7 @@ async function seedGames() {
                     city: franchiseName,
                     name: clubName,
                     abbreviation: abbreviation,
-                    logo_url: `https://media.gamblersanonymo.us/mlb/logos/${abbreviation}.png`,
+                    logo_url: `https://media.gamblersanonymo.us/mlb/logos/${abbreviation.toLowerCase()}.png`,
                     venue_id: dbVenue?.id,
                 },
             });
