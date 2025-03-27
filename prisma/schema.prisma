@@ -74,6 +74,8 @@ model Game {
   winningTeamId         Int?
   startingPitcherHomeId Int?
   startingPitcherAwayId Int?
+  homeStartingPitcher   Player?    @relation("HomePitcher", fields: [startingPitcherHomeId], references: [id])
+  awayStartingPitcher   Player?    @relation("AwayPitcher", fields: [startingPitcherAwayId], references: [id])
   // Lineups
   battingOrderHome      String[] // Array of player IDs or names
   battingOrderAway      String[]
@@ -110,6 +112,8 @@ model Player {
   PlayerGamePitchingStats   PlayerGamePitchingStats[]
   PlayerSeasonBattingStats  PlayerSeasonBattingStats?
   PlayerSeasonPitchingStats PlayerSeasonPitchingStats?
+  homeGamesPitched          Game[]                     @relation("HomePitcher")
+  awayGamesPitched          Game[]                     @relation("AwayPitcher")
 
   @@index([teamId, lastName]) // Fast sorting when listing a team's roster
 }
