@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
                 homeTeam: true,
                 awayTeam: true,
                 // Join the Player table for starting pitchers
-                //homeStartingPitcher: true, // Alias for home pitcher
-                //awayStartingPitcher: true, // Alias for away pitcher
+                homeStartingPitcher: true, // Alias for home pitcher
+                awayStartingPitcher: true, // Alias for away pitcher
             },
         });
 
