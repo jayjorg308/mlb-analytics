@@ -5,6 +5,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
 import { Player, Team } from "@prisma/client";
+import Link from "next/link";
 
 type Game = {
     id: number;
@@ -16,6 +17,8 @@ type Game = {
     status: string;
     homeStartingPitcher?: Player | null;
     awayStartingPitcher?: Player | null;
+    battingOrderHome: number[];
+    battingOrderAway: number[];
 };
 
 export default function Home() {
@@ -53,119 +56,135 @@ export default function Home() {
                 <Grid container spacing={2}>
                     {games.map((game) => (
                         <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
-                            <Card
-                                sx={{
-                                    p: 2,
-                                    transition: "transform 0.2s ease-in-out",
-                                    "&:hover": { transform: "scale(1.05)" },
-                                    boxShadow: 3,
-                                }}
-                            >
-                                {/* Game Time */}
-                                <Typography variant="body2" align="center" sx={{ fontWeight: "bold", mb: 1 }}>
-                                    {game.status === "FINAL"
-                                        ? "Final"
-                                        : new Date(game.date).toLocaleTimeString([], {
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                          })}
-                                </Typography>
-
-                                <Divider />
-
-                                {/* Teams & Scores */}
-                                <Box
+                            <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
+                                <Card
                                     sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        py: 2,
+                                        p: 2,
+                                        transition: "transform 0.2s ease-in-out",
+                                        "&:hover": { transform: "scale(1.05)" },
+                                        boxShadow: 3,
                                     }}
                                 >
-                                    {/* Away Team */}
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                        <Image
-                                            src={game.awayTeam.logo_url.toLowerCase()}
-                                            alt={game.awayTeam.abbreviation}
-                                            width={40}
-                                            height={40}
-                                        />
-                                        <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
-                                    </Box>
-                                    <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
-                                </Box>
+                                    {/* Game Time */}
+                                    <Typography variant="body2" align="center" sx={{ fontWeight: "bold", mb: 1 }}>
+                                        {game.status === "FINAL"
+                                            ? "Final"
+                                            : new Date(game.date).toLocaleTimeString([], {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                              })}
+                                    </Typography>
 
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        py: 2,
-                                    }}
-                                >
-                                    {/* Home Team */}
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                        <Image
-                                            src={game.homeTeam.logo_url.toLowerCase()}
-                                            alt={game.homeTeam.abbreviation}
-                                            width={40}
-                                            height={40}
-                                        />
-                                        <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
-                                    </Box>
-                                    <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
-                                </Box>
+                                    <Divider />
 
-                                <Divider />
-
-                                {/* Pitcher Info */}
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        mt: 2,
-                                    }}
-                                >
-                                    {/* Away Pitcher */}
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                        {game.awayStartingPitcher?.photoUrl && (
+                                    {/* Teams & Scores */}
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            py: 2,
+                                        }}
+                                    >
+                                        {/* Away Team */}
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                             <Image
-                                                src={game.awayStartingPitcher.photoUrl}
-                                                alt={game.awayStartingPitcher.lastName}
+                                                src={game.awayTeam.logo_url.toLowerCase()}
+                                                alt={game.awayTeam.abbreviation}
                                                 width={40}
                                                 height={40}
-                                                style={{ borderRadius: "50%" }}
                                             />
-                                        )}
-                                        <Typography variant="body2">
-                                            {game.awayStartingPitcher
-                                                ? `${game.awayStartingPitcher.firstName} ${game.awayStartingPitcher.lastName}`
-                                                : "TBD"}
-                                        </Typography>
+                                            <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
+                                        </Box>
+                                        <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
                                     </Box>
 
-                                    <Typography variant="body2">vs.</Typography>
-
-                                    {/* Home Pitcher */}
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                        {game.homeStartingPitcher?.photoUrl && (
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            py: 2,
+                                        }}
+                                    >
+                                        {/* Home Team */}
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                             <Image
-                                                src={game.homeStartingPitcher.photoUrl}
-                                                alt={game.homeStartingPitcher.lastName}
+                                                src={game.homeTeam.logo_url.toLowerCase()}
+                                                alt={game.homeTeam.abbreviation}
                                                 width={40}
                                                 height={40}
-                                                style={{ borderRadius: "50%" }}
                                             />
-                                        )}
-                                        <Typography variant="body2">
-                                            {game.homeStartingPitcher
-                                                ? `${game.homeStartingPitcher.firstName} ${game.homeStartingPitcher.lastName}`
-                                                : "TBD"}
-                                        </Typography>
+                                            <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
+                                        </Box>
+                                        <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
                                     </Box>
-                                </Box>
-                            </Card>
+
+                                    <Divider />
+
+                                    {/* Pitcher Info */}
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            mt: 2,
+                                        }}
+                                    >
+                                        {/* Away Pitcher */}
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            {game.awayStartingPitcher?.photoUrl && (
+                                                <Image
+                                                    src={game.awayStartingPitcher.photoUrl}
+                                                    alt={game.awayStartingPitcher.lastName}
+                                                    width={40}
+                                                    height={40}
+                                                    style={{ borderRadius: "50%" }}
+                                                />
+                                            )}
+                                            <Typography variant="body2">
+                                                {game.awayStartingPitcher
+                                                    ? `${game.awayStartingPitcher.firstName} ${game.awayStartingPitcher.lastName}`
+                                                    : "TBD"}
+                                            </Typography>
+                                        </Box>
+
+                                        <Typography variant="body2">vs.</Typography>
+
+                                        {/* Home Pitcher */}
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            {game.homeStartingPitcher?.photoUrl && (
+                                                <Image
+                                                    src={game.homeStartingPitcher.photoUrl}
+                                                    alt={game.homeStartingPitcher.lastName}
+                                                    width={40}
+                                                    height={40}
+                                                    style={{ borderRadius: "50%" }}
+                                                />
+                                            )}
+                                            <Typography variant="body2">
+                                                {game.homeStartingPitcher
+                                                    ? `${game.homeStartingPitcher.firstName} ${game.homeStartingPitcher.lastName}`
+                                                    : "TBD"}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                    <Divider />
+                                    <Box>
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="body2" align="center" sx={{ fontWeight: "bold" }}>
+                                                Batting Orders
+                                            </Typography>
+                                            <Typography variant="body2" align="left">
+                                                Away: {game.battingOrderAway.length > 0 ? "Lineup Set" : "TBD"}
+                                            </Typography>
+                                            <Typography variant="body2" align="left">
+                                                Home: {game.battingOrderHome.length > 0 ? "Lineup Set" : "TBD"}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Card>
+                            </Link>
                         </Grid>
                     ))}
                 </Grid>
