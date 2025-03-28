@@ -2,7 +2,6 @@
     "name": "gamblers-anonymous",
     "version": "0.1.0",
     "private": true,
-    "type": "module",
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
@@ -12,7 +11,7 @@
         "set:probablePitchers": "ts-node prisma/setProbablePitchers.ts",
         "log:game": "ts-node prisma/logGame.ts",
         "seed:record": "ts-node prisma/seedTeamRecord.ts",
-        "fetch:lineups": "ts-node prisma/fetchLineupsAndPitchers.ts"
+        "fetch:lineups": "ts-node cron/fetchLineupsAndPitchers.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
