@@ -3,7 +3,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     /* config options here */
     images: {
-        domains: ["media.gamblersanonymo.us"],
+        remotePatterns: [
+            // Allow images from https://media.gamblersanonymo.us/
+            {
+                protocol: "https",
+                hostname: "media.gamblersanonymo.us",
+                port: "",
+                pathname: "/**",
+            },
+        ],
     },
 };
 
