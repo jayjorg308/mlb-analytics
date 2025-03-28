@@ -3,15 +3,15 @@ import { Box, Typography, Divider } from "@mui/material";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma"; // Ensure you have Prisma setup
 
-type GameProps = {
-    params: {
-        id: string;
-    };
-};
+type Params = Promise<{ slug: string }>;
+type GameParams = Promise<{ id: string }>;
 
-export default async function GameDetail({ params }: GameProps) {
-    const param = await params;
-    const gameId = parseInt(param.id, 10);
+export default async function GameDetail(props: { params: Params; gameParams: GameParams }) {
+    const params = await props.params;
+    const gameParams = await props.gameParams;
+
+    console.log(params);
+    const gameId = parseInt(gameParams.id, 10);
     if (isNaN(gameId)) return notFound();
 
     const game = await prisma.game.findUnique({
