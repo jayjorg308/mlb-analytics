@@ -83,7 +83,7 @@ async function updateLineupsAndPitchers() {
                 },
             });
 
-            console.log(`Updated game ${game.gamePk} with pitchers ${homePitcherId} and ${awayPitcherId}`);
+            console.log(`Updated game ${game.gamePk} w/ pitchers ${homePitcherId} and ${awayPitcherId}`);
         }
     } catch (error) {
         console.error("Error updating probable pitchers:", error);
