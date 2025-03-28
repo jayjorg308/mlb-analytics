@@ -1,0 +1,365 @@
+{
+    "copyright": "Copyright 2025 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+    "totalItems": 1,
+    "totalEvents": 0,
+    "totalGames": 1,
+    "totalGamesInProgress": 0,
+    "dates": [
+        {
+            "date": "2025-03-18",
+            "totalItems": 1,
+            "totalEvents": 0,
+            "totalGames": 1,
+            "totalGamesInProgress": 0,
+            "games": [
+                {
+                    "gamePk": 778563,
+                    "gameGuid": "0d975d54-3daf-434e-a94e-fce32190accb",
+                    "link": "/api/v1.1/game/778563/feed/live",
+                    "gameType": "R",
+                    "season": "2025",
+                    "gameDate": "2025-03-18T10:10:00Z",
+                    "officialDate": "2025-03-18",
+                    "status": {
+                        "abstractGameState": "Final",
+                        "codedGameState": "F",
+                        "detailedState": "Final",
+                        "statusCode": "F",
+                        "startTimeTBD": false,
+                        "abstractGameCode": "F"
+                    },
+                    "teams": {
+                        "away": {
+                            "leagueRecord": {
+                                "wins": 1,
+                                "losses": 0,
+                                "pct": "1.000"
+                            },
+                            "score": 4,
+                            "team": {
+                                "id": 119,
+                                "name": "Los Angeles Dodgers",
+                                "link": "/api/v1/teams/119"
+                            },
+                            "isWinner": true,
+                            "probablePitcher": {
+                                "id": 808967,
+                                "fullName": "Yoshinobu Yamamoto",
+                                "link": "/api/v1/people/808967"
+                            },
+                            "splitSquad": false,
+                            "seriesNumber": 1
+                        },
+                        "home": {
+                            "leagueRecord": {
+                                "wins": 0,
+                                "losses": 1,
+                                "pct": ".000"
+                            },
+                            "score": 1,
+                            "team": {
+                                "id": 112,
+                                "name": "Chicago Cubs",
+                                "link": "/api/v1/teams/112"
+                            },
+                            "isWinner": false,
+                            "probablePitcher": {
+                                "id": 684007,
+                                "fullName": "Shota Imanaga",
+                                "link": "/api/v1/people/684007"
+                            },
+                            "splitSquad": false,
+                            "seriesNumber": 1
+                        }
+                    },
+                    "venue": {
+                        "id": 2397,
+                        "name": "Tokyo Dome",
+                        "link": "/api/v1/venues/2397"
+                    },
+                    "content": {
+                        "link": "/api/v1/game/778563/content"
+                    },
+                    "isTie": false,
+                    "gameNumber": 1,
+                    "publicFacing": true,
+                    "doubleHeader": "N",
+                    "gamedayType": "E",
+                    "tiebreaker": "N",
+                    "calendarEventID": "14-778563-2025-03-18",
+                    "seasonDisplay": "2025",
+                    "dayNight": "night",
+                    "description": "in Tokyo, Japan",
+                    "scheduledInnings": 9,
+                    "reverseHomeAwayStatus": false,
+                    "inningBreakLength": 120,
+                    "gamesInSeries": 2,
+                    "seriesGameNumber": 1,
+                    "seriesDescription": "Regular Season",
+                    "recordSource": "S",
+                    "ifNecessary": "N",
+                    "ifNecessaryDescription": "Normal Game",
+                    "lineups": {
+                        "homePlayers": [
+                            {
+                                "id": 664023,
+                                "fullName": "Ian Happ",
+                                "link": "/api/v1/people/664023",
+                                "firstName": "Ian",
+                                "lastName": "Happ",
+                                "primaryPosition": {
+                                    "code": "7",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "LF"
+                                },
+                                "useName": "Ian"
+                            },
+                            {
+                                "id": 673548,
+                                "fullName": "Seiya Suzuki",
+                                "link": "/api/v1/people/673548",
+                                "firstName": "Seiya",
+                                "lastName": "Suzuki",
+                                "primaryPosition": {
+                                    "code": "10",
+                                    "name": "Designated Hitter",
+                                    "type": "Hitter",
+                                    "abbreviation": "DH"
+                                },
+                                "useName": "Seiya"
+                            },
+                            {
+                                "id": 663656,
+                                "fullName": "Kyle Tucker",
+                                "link": "/api/v1/people/663656",
+                                "firstName": "Kyle",
+                                "lastName": "Tucker",
+                                "primaryPosition": {
+                                    "code": "9",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "RF"
+                                },
+                                "useName": "Kyle"
+                            },
+                            {
+                                "id": 683737,
+                                "fullName": "Michael Busch",
+                                "link": "/api/v1/people/683737",
+                                "firstName": "Michael",
+                                "lastName": "Busch",
+                                "primaryPosition": {
+                                    "code": "3",
+                                    "name": "First Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "1B"
+                                },
+                                "useName": "Michael"
+                            },
+                            {
+                                "id": 807713,
+                                "fullName": "Matt Shaw",
+                                "link": "/api/v1/people/807713",
+                                "firstName": "Matthew",
+                                "lastName": "Shaw",
+                                "primaryPosition": {
+                                    "code": "5",
+                                    "name": "Third Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "3B"
+                                },
+                                "useName": "Matt"
+                            },
+                            {
+                                "id": 621020,
+                                "fullName": "Dansby Swanson",
+                                "link": "/api/v1/people/621020",
+                                "firstName": "James",
+                                "lastName": "Swanson",
+                                "primaryPosition": {
+                                    "code": "6",
+                                    "name": "Shortstop",
+                                    "type": "Infielder",
+                                    "abbreviation": "SS"
+                                },
+                                "useName": "Dansby"
+                            },
+                            {
+                                "id": 691718,
+                                "fullName": "Pete Crow-Armstrong",
+                                "link": "/api/v1/people/691718",
+                                "firstName": "Pete",
+                                "lastName": "Crow-Armstrong",
+                                "primaryPosition": {
+                                    "code": "8",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "CF"
+                                },
+                                "useName": "Pete"
+                            },
+                            {
+                                "id": 665804,
+                                "fullName": "Miguel Amaya",
+                                "link": "/api/v1/people/665804",
+                                "firstName": "Miguel",
+                                "lastName": "Amaya",
+                                "primaryPosition": {
+                                    "code": "2",
+                                    "name": "Catcher",
+                                    "type": "Catcher",
+                                    "abbreviation": "C"
+                                },
+                                "useName": "Miguel"
+                            },
+                            {
+                                "id": 542932,
+                                "fullName": "Jon Berti",
+                                "link": "/api/v1/people/542932",
+                                "firstName": "Jonathon",
+                                "lastName": "Berti",
+                                "primaryPosition": {
+                                    "code": "4",
+                                    "name": "Second Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "2B"
+                                },
+                                "useName": "Jon"
+                            }
+                        ],
+                        "awayPlayers": [
+                            {
+                                "id": 660271,
+                                "fullName": "Shohei Ohtani",
+                                "link": "/api/v1/people/660271",
+                                "firstName": "Shohei",
+                                "lastName": "Ohtani",
+                                "primaryPosition": {
+                                    "code": "10",
+                                    "name": "Designated Hitter",
+                                    "type": "Hitter",
+                                    "abbreviation": "DH"
+                                },
+                                "useName": "Shohei"
+                            },
+                            {
+                                "id": 669242,
+                                "fullName": "Tommy Edman",
+                                "link": "/api/v1/people/669242",
+                                "firstName": "Thomas",
+                                "lastName": "Edman",
+                                "primaryPosition": {
+                                    "code": "4",
+                                    "name": "Second Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "2B"
+                                },
+                                "useName": "Tommy"
+                            },
+                            {
+                                "id": 606192,
+                                "fullName": "Teoscar Hernández",
+                                "link": "/api/v1/people/606192",
+                                "firstName": "Teoscar",
+                                "lastName": "Hernández",
+                                "primaryPosition": {
+                                    "code": "9",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "RF"
+                                },
+                                "useName": "Teoscar"
+                            },
+                            {
+                                "id": 669257,
+                                "fullName": "Will Smith",
+                                "link": "/api/v1/people/669257",
+                                "firstName": "William",
+                                "lastName": "Smith",
+                                "primaryPosition": {
+                                    "code": "2",
+                                    "name": "Catcher",
+                                    "type": "Catcher",
+                                    "abbreviation": "C"
+                                },
+                                "useName": "Will"
+                            },
+                            {
+                                "id": 571970,
+                                "fullName": "Max Muncy",
+                                "link": "/api/v1/people/571970",
+                                "firstName": "Maxwell",
+                                "lastName": "Muncy",
+                                "primaryPosition": {
+                                    "code": "5",
+                                    "name": "Third Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "3B"
+                                },
+                                "useName": "Max"
+                            },
+                            {
+                                "id": 571771,
+                                "fullName": "Enrique Hernández",
+                                "link": "/api/v1/people/571771",
+                                "firstName": "Enrique",
+                                "lastName": "Hernández",
+                                "primaryPosition": {
+                                    "code": "3",
+                                    "name": "First Base",
+                                    "type": "Infielder",
+                                    "abbreviation": "1B"
+                                },
+                                "useName": "Enrique"
+                            },
+                            {
+                                "id": 624424,
+                                "fullName": "Michael Conforto",
+                                "link": "/api/v1/people/624424",
+                                "firstName": "Michael",
+                                "lastName": "Conforto",
+                                "primaryPosition": {
+                                    "code": "7",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "LF"
+                                },
+                                "useName": "Michael"
+                            },
+                            {
+                                "id": 500743,
+                                "fullName": "Miguel Rojas",
+                                "link": "/api/v1/people/500743",
+                                "firstName": "Miguel",
+                                "lastName": "Rojas",
+                                "primaryPosition": {
+                                    "code": "6",
+                                    "name": "Shortstop",
+                                    "type": "Infielder",
+                                    "abbreviation": "SS"
+                                },
+                                "useName": "Miguel"
+                            },
+                            {
+                                "id": 681624,
+                                "fullName": "Andy Pages",
+                                "link": "/api/v1/people/681624",
+                                "firstName": "Andy",
+                                "lastName": "Pages",
+                                "primaryPosition": {
+                                    "code": "8",
+                                    "name": "Outfielder",
+                                    "type": "Outfielder",
+                                    "abbreviation": "CF"
+                                },
+                                "useName": "Andy"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "events": []
+        }
+    ]
+}

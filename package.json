@@ -9,7 +9,9 @@
         "lint": "next lint",
         "generate": "prisma generate",
         "set:probablePitchers": "ts-node prisma/setProbablePitchers.ts",
-        "log:game": "ts-node prisma/logGame.ts"
+        "log:game": "ts-node prisma/logGame.ts",
+        "seed:record": "ts-node prisma/seedTeamRecord.ts",
+        "fetch:lineups": "ts-node prisma/fetchLineupsAndPitchers.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",

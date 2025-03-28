@@ -77,8 +77,8 @@ model Game {
   homeStartingPitcher   Player?    @relation("HomePitcher", fields: [startingPitcherHomeId], references: [id])
   awayStartingPitcher   Player?    @relation("AwayPitcher", fields: [startingPitcherAwayId], references: [id])
   // Lineups
-  battingOrderHome      String[] // Array of player IDs or names
-  battingOrderAway      String[]
+  battingOrderHome      Int[] // Array of player IDs or names
+  battingOrderAway      Int[]
 
   Weather                 Weather?
   PlayerGameBattingStats  PlayerGameBattingStats[]
