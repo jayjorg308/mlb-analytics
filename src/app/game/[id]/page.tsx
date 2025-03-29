@@ -10,8 +10,7 @@ type GameProps = {
 };
 
 export default async function GameDetail({ params }: GameProps) {
-    const param = await params;
-    const gameId = parseInt(param.id, 10);
+    const gameId = parseInt(params.id, 10);
     if (isNaN(gameId)) return notFound();
 
     const game = await prisma.game.findUnique({
