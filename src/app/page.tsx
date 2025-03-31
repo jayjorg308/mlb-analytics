@@ -5,6 +5,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
 import { Player, Team } from "@prisma/client";
+import Link from "next/link";
 
 type Game = {
     id: number;
@@ -55,7 +56,7 @@ export default function Home() {
                 <Grid container spacing={2}>
                     {games.map((game) => (
                         <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
-                            {/* <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}> */}
+                            <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
                             <Card
                                 sx={{
                                     p: 2,
@@ -183,7 +184,7 @@ export default function Home() {
                                     </Box>
                                 </Box>
                             </Card>
-                            {/* </Link> */}
+                            </Link>
                         </Grid>
                     ))}
                 </Grid>
