@@ -5,7 +5,114 @@ interface Player {
     id: number;
 }
 
+type PlayerStatus = {
+    code: string;
+    description: string;
+};
+
+type PlayerPosition = {
+    code: string;
+    name: string;
+    type: string;
+    abbreviation: string;
+};
+
+type PlayerPerson = {
+    id: number;
+    fullName: string;
+    link: string;
+};
+
+type RosterPlayer = {
+    person: PlayerPerson;
+    jerseyNumber: string;
+    position: PlayerPosition;
+    status: PlayerStatus;
+    parentTeamId: number;
+    note?: string; // Optional field
+};
+
+type RosterResponse = {
+    roster: RosterPlayer[];
+};
+
 const prisma = new PrismaClient();
+
+function splitName(fullName: string): { firstName: string; lastName: string } {
+    const [firstName, ...lastNameParts] = fullName.split(" ");
+    const lastName = lastNameParts.join(" "); // Join remaining parts as lastName
+
+    return {
+        firstName,
+        lastName,
+    };
+}
+
+function getTeamIdFromMlbApiId(mlbApiId: number): Promise<number> {
+    return prisma.team
+        .findUnique({
+            where: { mlb_api_id: mlbApiId },
+            select: { id: true },
+        })
+        .then((team) => (team ? team.id : 0));
+}
+
+const checkRosters = async (awayTeamId: number, homeTeamId: number) => {
+    try {
+        const [awayRosterRes, homeRosterRes] = await Promise.all([
+            axios.get(`https://statsapi.mlb.com/api/v1/teams/${awayTeamId}/roster/40Man`),
+            axios.get(`https://statsapi.mlb.com/api/v1/teams/${homeTeamId}/roster/40Man`),
+        ]);
+
+        const awayRosterData: RosterResponse = awayRosterRes.data;
+        const homeRosterData: RosterResponse = homeRosterRes.data;
+
+        const allPlayers = [...awayRosterData.roster, ...homeRosterData.roster];
+
+        // Extract MLB API IDs
+        const playerApiIds = allPlayers.map((player) => player.person.id);
+
+        // Fetch existing player records
+        const existingPlayers = await prisma.player.findMany({
+            where: { mlb_api_id: { in: playerApiIds } },
+            select: { mlb_api_id: true },
+        });
+
+        // Determine missing players
+        const existingPlayerIds = new Set(existingPlayers.map((p) => p.mlb_api_id));
+        const missingPlayers = allPlayers.filter((player) => !existingPlayerIds.has(player.person.id));
+
+        if (missingPlayers.length > 0) {
+            // Map team IDs before inserting players
+            const teamIdMap: Record<number, number> = {};
+            for (const player of missingPlayers) {
+                if (!teamIdMap[player.parentTeamId]) {
+                    teamIdMap[player.parentTeamId] = await getTeamIdFromMlbApiId(player.parentTeamId);
+                }
+            }
+
+            // Batch insert missing players
+            await prisma.player.createMany({
+                data: missingPlayers.map((player) => ({
+                    mlb_api_id: player.person.id,
+                    firstName: splitName(player.person.fullName).firstName,
+                    lastName: splitName(player.person.fullName).lastName,
+                    position: player.position.abbreviation,
+                    uniformNumber: parseInt(player.jerseyNumber as string),
+                    teamId: teamIdMap[player.parentTeamId] || null, // Ensure teamId is resolved
+                    photoUrl: `https://media.gamblersanonymo.us/mlb/players/${player.person.id}.jpg`,
+                })),
+                skipDuplicates: true,
+            });
+
+            console.log(`Inserted ${missingPlayers.length} new players into the database.`);
+        } else {
+            console.log("All players already exist in the database.");
+        }
+    } catch (error) {
+        console.error("Error checking rosters:", error);
+    }
+};
 
 // Function to map MLB API IDs to internal Player IDs
 const mapMlbApiIdsToPlayerIds = async (mlbApiIds: number[]): Promise<Record<number, number>> => {
@@ -37,6 +144,9 @@ async function updateLineupsAndPitchers() {
             });
 
             if (!existingGame) continue;
+
+            // check current 40 man rosters to see if we have all of the players in our db
+            await checkRosters(game.teams.away.team.id, game.teams.home.team.id);
 
             const homePitcherApiId = game.teams.home.probablePitcher?.id;
             const awayPitcherApiId = game.teams.away.probablePitcher?.id;
