@@ -65,6 +65,8 @@ model Game {
   venue                 Venue?     @relation(fields: [venue_id], references: [id])
   date                  DateTime
   status                GameStatus
+  isPostseason          Boolean    @default(false)
+  isNeutralSite         Boolean    @default(false)
   homeTeamId            Int
   awayTeamId            Int
   homeTeam              Team       @relation("HomeTeam", fields: [homeTeamId], references: [id])
@@ -215,6 +217,7 @@ model PlayerGamePitchingStats {
   passedBall             Int
   popOuts                Int
   lineOuts               Int
+  pitchingScore          Decimal?
 
   @@unique([playerId, gameId]) // Ensures only one record per player per game
   @@index(playerId) // Fast queries for a player's game stats
@@ -314,6 +317,7 @@ model PlayerSeasonPitchingStats {
   passedBall             Int
   popOuts                Int
   lineOuts               Int
+  runningPitcherScore    Decimal? // A calculated score based on various pitching stats
 
   @@unique([playerId, seasonId])
   @@index(playerId)
@@ -586,17 +590,17 @@ model Weather {
 }
 
 model InningDetails {
-  id         Int @id @default(autoincrement())
+  id         Int  @id @default(autoincrement())
   gameId     Int
   inning     Int
-  homeRuns   Int
-  awayRuns   Int
-  homeHits   Int
-  awayHits   Int
-  homeErrors Int
-  awayErrors Int
-  homeLeftOn Int
-  awayLeftOn Int
+  homeRuns   Int?
+  awayRuns   Int?
+  homeHits   Int?
+  awayHits   Int?
+  homeErrors Int?
+  awayErrors Int?
+  homeLeftOn Int?
+  awayLeftOn Int?
 
   game Game @relation(fields: [gameId], references: [id])
 
