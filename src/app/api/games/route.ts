@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
                 homeStartingPitcher: true, // Alias for home pitcher
                 awayStartingPitcher: true, // Alias for away pitcher
             },
+            orderBy: {
+                date: "asc",
+            },
         });
 
         return NextResponse.json(games);
