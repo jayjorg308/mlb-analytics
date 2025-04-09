@@ -65,10 +65,3 @@ export function updateElo({
         winProbHome,
     };
 }
-
-updateElo({
-    homeElo: 1515.14437,
-    awayElo: 1539.148299,
-    homeScore: 1,
-    awayScore: 2,
-});

@@ -13,7 +13,8 @@
         "seed:record": "ts-node prisma/seedTeamRecord.ts",
         "fetch:lineups": "ts-node cron/fetchLineupsAndPitchers.ts",
         "log:results": "ts-node cron/getGameResults.ts",
-        "update:elo": "ts-node cron/updateElo.ts"
+        "update:elo": "ts-node cron/updateElo.ts",
+        "process:games": "ts-node cron/processGames.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
