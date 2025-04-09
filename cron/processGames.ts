@@ -1,4 +1,4 @@
-import { Game, GameStatus, PitcherDecision, PrismaClient } from "@prisma/client";
+import { Game, GameStatus, PitcherDecision, Prisma, PrismaClient } from "@prisma/client";
 import axios from "axios";
 import { updateElo } from "./updateElo";
 import {
@@ -10,7 +10,6 @@ import {
     GameBattingStatsTeam,
     GamePitchingStatsTeam,
     GameFieldingStatsTeam,
-    GameStats,
     GameBatting,
     GamePitching,
 } from "./interfaces";
@@ -20,43 +19,10 @@ const prisma = new PrismaClient();
 async function getGamesForDay(): Promise<GameDetails[]> {
     //const today = new Date().toLocaleDateString();
     const { data }: { data: ScheduleData } = await axios.get(
-        `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2025-03-18&endDate=2025-03-18&gameType=R`,
+        `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2025-04-09&endDate=2025-04-09&gameType=R`,
     );
 
     return data.dates.flatMap((date) => date.games);
-}
-
-async function processGame(game: GameDetails, existingGame: Game) {
-    const { data }: { data: GameData } = await axios.get(
-        `https://statsapi.mlb.com/api/v1.1/game/${game.gamePk}/feed/live`,
-    );
-    const { liveData } = data;
-
-    const homeTeamRuns = liveData.linescore.teams.home.runs;
-    const awayTeamRuns = liveData.linescore.teams.away.runs;
-    const homeTeamWon = homeTeamRuns > awayTeamRuns;
-    const winningTeamId = homeTeamWon ? existingGame.homeTeamId : existingGame.awayTeamId;
-
-    // UPDATE SCORE AND STATUS
-    await updateFinalScoreAndStatus(awayTeamRuns, homeTeamRuns, winningTeamId, game);
-
-    // CREATE INNING DETAILS
-    await insertInningDetails(liveData.linescore.innings, existingGame.id, game.gamePk);
-
-    // UPDATE TEAM RECORDS
-    await updateTeamRecords(winningTeamId, game, existingGame);
-
-    // UPDATE TEAM ELO
-    await updateTeamElo(awayTeamRuns, homeTeamRuns, game, existingGame);
-
-    // CREATE/UPDATE PLAYER STATS
-    await updatePlayerStats(liveData.boxscore, game, existingGame);
-
-    // CREATE TEAM GAME STATS
-    await updateTeamGameStats(liveData.boxscore, game, existingGame);
-
-    // UPDATE TEAM SEASON STATS
-    await updateTeamSeasonStats(liveData.boxscore, game, existingGame);
 }
 
 async function getGameResults() {
@@ -72,7 +38,85 @@ async function getGameResults() {
             if (existingGame.status === GameStatus.FINAL) continue;
             if (game.status.statusCode !== "F") continue;
 
-            await processGame(game, existingGame);
+            try {
+                // Fetch game data outside of transaction
+                const { data }: { data: GameData } = await axios.get(
+                    `https://statsapi.mlb.com/api/v1.1/game/${game.gamePk}/feed/live`,
+                );
+                const { liveData } = data;
+
+                const homeTeamRuns = liveData.linescore.teams.home.runs;
+                const awayTeamRuns = liveData.linescore.teams.away.runs;
+                const homeTeamWon = homeTeamRuns > awayTeamRuns;
+                const winningTeamId = homeTeamWon ? existingGame.homeTeamId : existingGame.awayTeamId;
+
+                // Process each operation in its own transaction
+                // This prevents the entire process from failing if one part fails
+
+                // 1. Update final score and status
+                await prisma
+                    .$transaction(async (tx) => {
+                        await updateFinalScoreAndStatus(awayTeamRuns, homeTeamRuns, winningTeamId, game, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error updating final score for game ${game.gamePk}:`, error);
+                    });
+
+                // 2. Create inning details
+                await prisma
+                    .$transaction(async (tx) => {
+                        await insertInningDetails(liveData.linescore.innings, existingGame.id, game.gamePk, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error inserting inning details for game ${game.gamePk}:`, error);
+                    });
+
+                // 3. Update team records
+                await prisma
+                    .$transaction(async (tx) => {
+                        await updateTeamRecords(winningTeamId, game, existingGame, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error updating team records for game ${game.gamePk}:`, error);
+                    });
+
+                // 4. Update team ELO
+                await prisma
+                    .$transaction(async (tx) => {
+                        await updateTeamElo(awayTeamRuns, homeTeamRuns, game, existingGame, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error updating team ELO for game ${game.gamePk}:`, error);
+                    });
+
+                // 5. Update player stats
+                await updatePlayerStats(liveData.boxscore, game, existingGame).catch((error) => {
+                    console.error(`Error updating player stats for game ${game.gamePk}:`, error);
+                });
+
+                // 6. Update team game stats
+                await prisma
+                    .$transaction(async (tx) => {
+                        await updateTeamGameStats(liveData.boxscore, game, existingGame, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error updating team game stats for game ${game.gamePk}:`, error);
+                    });
+
+                // 7. Update team season stats
+                await prisma
+                    .$transaction(async (tx) => {
+                        await updateTeamSeasonStats(liveData.boxscore, game, existingGame, tx);
+                    })
+                    .catch((error) => {
+                        console.error(`Error updating team season stats for game ${game.gamePk}:`, error);
+                    });
+
+                console.log(`Successfully processed game ${game.gamePk}`);
+            } catch (error) {
+                console.error(`Error processing game ${game.gamePk}:`, error);
+                // Continue with the next game even if this one fails
+            }
         }
     } catch (error) {
         console.error("Error updating game results:", error);
@@ -86,9 +130,10 @@ async function updateFinalScoreAndStatus(
     homeTeamRuns: number,
     winningTeamId: number,
     game: GameDetails,
+    tx: Prisma.TransactionClient,
 ) {
     try {
-        await prisma.game.update({
+        await tx.game.update({
             where: { mlb_api_id: game.gamePk },
             data: {
                 status: game.status.statusCode === "F" ? GameStatus.FINAL : GameStatus.SCHEDULED,
@@ -104,7 +149,7 @@ async function updateFinalScoreAndStatus(
     }
 }
 
-async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: number) {
+async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: number, tx: Prisma.TransactionClient) {
     try {
         if (!innings || innings.length === 0) {
             console.warn(`No innings found for game ${gamePk}`);
@@ -112,7 +157,7 @@ async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: 
         }
 
         for (const inning of innings) {
-            await prisma.inningDetails.create({
+            await tx.inningDetails.create({
                 data: {
                     gameId: dbGameId,
                     inning: inning.num,
@@ -134,10 +179,15 @@ async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: 
     }
 }
 
-async function updateTeamRecords(winningTeamId: number, game: GameDetails, existingGame: Game) {
+async function updateTeamRecords(
+    winningTeamId: number,
+    game: GameDetails,
+    existingGame: Game,
+    tx: Prisma.TransactionClient,
+) {
     try {
         // Fetch current team records for this game
-        const teamRecords = await prisma.teamRecord.findMany({
+        const teamRecords = await tx.teamRecord.findMany({
             where: { gameId: existingGame.id },
         });
 
@@ -151,7 +201,7 @@ async function updateTeamRecords(winningTeamId: number, game: GameDetails, exist
             const isWinner = record.teamId === winningTeamId;
 
             // Update the current game record
-            const updatedRecord = await prisma.teamRecord.update({
+            const updatedRecord = await tx.teamRecord.update({
                 where: { id: record.id },
                 data: {
                     wins: isWinner ? record.wins + 1 : record.wins,
@@ -164,7 +214,7 @@ async function updateTeamRecords(winningTeamId: number, game: GameDetails, exist
             });
 
             // **Find the next scheduled game for this team**
-            const nextGameRecord = await prisma.teamRecord.findFirst({
+            const nextGameRecord = await tx.teamRecord.findFirst({
                 where: {
                     teamId: record.teamId,
                     gameId: { gt: existingGame.id }, // Next game after current game
@@ -174,7 +224,7 @@ async function updateTeamRecords(winningTeamId: number, game: GameDetails, exist
 
             if (nextGameRecord) {
                 // Carry forward updated stats to next game
-                await prisma.teamRecord.update({
+                await tx.teamRecord.update({
                     where: { id: nextGameRecord.id },
                     data: {
                         wins: updatedRecord.wins,
@@ -194,10 +244,16 @@ async function updateTeamRecords(winningTeamId: number, game: GameDetails, exist
     }
 }
 
-async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: GameDetails, existingGame: Game) {
+async function updateTeamElo(
+    awayTeamRuns: number,
+    homeTeamRuns: number,
+    game: GameDetails,
+    existingGame: Game,
+    tx: Prisma.TransactionClient,
+) {
     try {
         // Fetch current team ELO records for this game
-        const teamELOs = await prisma.teamELO.findMany({
+        const teamELOs = await tx.teamELO.findMany({
             where: { gameId: existingGame.id },
         });
 
@@ -222,7 +278,7 @@ async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: G
             const isHomeTeam = elo.teamId === existingGame.homeTeamId;
 
             // Update the current game record
-            const updatedEloRecord = await prisma.teamELO.update({
+            const updatedEloRecord = await tx.teamELO.update({
                 where: { id: elo.id },
                 data: {
                     elo: isHomeTeam ? eloData.newHomeElo : eloData.newAwayElo,
@@ -231,7 +287,7 @@ async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: G
             });
 
             // **Find the next scheduled game for this team**
-            const nextGameELO = await prisma.teamELO.findFirst({
+            const nextGameELO = await tx.teamELO.findFirst({
                 where: {
                     teamId: elo.teamId,
                     gameId: { gt: existingGame.id }, // Next game after current game
@@ -241,11 +297,10 @@ async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: G
 
             if (nextGameELO) {
                 // Carry forward updated stats to next game
-                await prisma.teamELO.update({
+                await tx.teamELO.update({
                     where: { id: nextGameELO.id },
                     data: {
                         elo: updatedEloRecord.elo,
-                        eloChange: updatedEloRecord.eloChange,
                     },
                 });
 
@@ -257,18 +312,23 @@ async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: G
     }
 }
 
-async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existingGame: Game) {
+async function updateTeamGameStats(
+    boxscore: Boxscore,
+    game: GameDetails,
+    existingGame: Game,
+    tx: Prisma.TransactionClient,
+) {
     try {
         if (!boxscore) return;
 
         // check to see if records already exist for this game
-        const existingBattingStats = await prisma.teamGameBattingStats.findMany({
+        const existingBattingStats = await tx.teamGameBattingStats.findMany({
             where: { gameId: existingGame.id },
         });
-        const existingPitchingStats = await prisma.teamGamePitchingStats.findMany({
+        const existingPitchingStats = await tx.teamGamePitchingStats.findMany({
             where: { gameId: existingGame.id },
         });
-        const existingFieldingStats = await prisma.teamGameFieldingStats.findMany({
+        const existingFieldingStats = await tx.teamGameFieldingStats.findMany({
             where: { gameId: existingGame.id },
         });
 
@@ -296,7 +356,7 @@ async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existi
 
             // batting stats
             if (battingstats) {
-                await prisma.teamGameBattingStats.create({
+                await tx.teamGameBattingStats.create({
                     data: {
                         teamId: teamId,
                         gameId: existingGame.id,
@@ -333,7 +393,7 @@ async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existi
 
             // pitching stats
             if (pitchingStats) {
-                await prisma.teamGamePitchingStats.create({
+                await tx.teamGamePitchingStats.create({
                     data: {
                         teamId: teamId,
                         gameId: existingGame.id,
@@ -382,7 +442,7 @@ async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existi
 
             // fielding stats
             if (fieldingStats) {
-                await prisma.teamGameFieldingStats.create({
+                await tx.teamGameFieldingStats.create({
                     data: {
                         teamId: teamId,
                         gameId: existingGame.id,
@@ -405,7 +465,12 @@ async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existi
     }
 }
 
-async function updateTeamSeasonStats(boxscore: Boxscore, game: GameDetails, existingGame: Game) {
+async function updateTeamSeasonStats(
+    boxscore: Boxscore,
+    game: GameDetails,
+    existingGame: Game,
+    tx: Prisma.TransactionClient,
+) {
     try {
         // Process each team's stats
         for (const [side, teamData] of Object.entries(boxscore.teams)) {
@@ -426,13 +491,13 @@ async function updateTeamSeasonStats(boxscore: Boxscore, game: GameDetails, exis
                     : (teamData.teamStats?.fielding as GameFieldingStatsTeam);
 
             // Update batting season stats
-            if (battingstats) await updateTeamSeasonBattingStats(teamId, existingGame.season_id, battingstats);
+            if (battingstats) await updateTeamSeasonBattingStats(teamId, existingGame.season_id, battingstats, tx);
 
             // Update pitching season stats
-            if (pitchingStats) await updateTeamSeasonPitchingStats(teamId, existingGame.season_id, pitchingStats);
+            if (pitchingStats) await updateTeamSeasonPitchingStats(teamId, existingGame.season_id, pitchingStats, tx);
 
             // Update fielding season stats
-            if (fieldingStats) await updateTeamSeasonFieldingStats(teamId, existingGame.season_id, fieldingStats);
+            if (fieldingStats) await updateTeamSeasonFieldingStats(teamId, existingGame.season_id, fieldingStats, tx);
 
             console.log(`Updated season stats for team ${teamId} after game ${game.gamePk}`);
         }
@@ -441,9 +506,14 @@ async function updateTeamSeasonStats(boxscore: Boxscore, game: GameDetails, exis
     }
 }
 
-async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, gameStats: GameBattingStatsTeam) {
+async function updateTeamSeasonBattingStats(
+    teamId: number,
+    seasonId: number,
+    gameStats: GameBattingStatsTeam,
+    tx: Prisma.TransactionClient,
+) {
     // Get the current season stats or create a new one if it doesn't exist
-    const seasonStats = await prisma.teamSeasonBattingStats.findUnique({
+    const seasonStats = await tx.teamSeasonBattingStats.findUnique({
         where: {
             teamId_seasonId: {
                 teamId: teamId,
@@ -454,7 +524,7 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
 
     if (!seasonStats) {
         // Create a new season stats record if it doesn't exist
-        await prisma.teamSeasonBattingStats.create({
+        await tx.teamSeasonBattingStats.create({
             data: {
                 teamId: teamId,
                 seasonId: seasonId,
@@ -490,7 +560,7 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
         });
     } else {
         // Update the existing season stats by adding the game stats
-        await prisma.teamSeasonBattingStats.update({
+        await tx.teamSeasonBattingStats.update({
             where: {
                 teamId_seasonId: {
                     teamId: teamId,
@@ -531,9 +601,14 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
     }
 }
 
-async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, gameStats: GamePitchingStatsTeam) {
+async function updateTeamSeasonPitchingStats(
+    teamId: number,
+    seasonId: number,
+    gameStats: GamePitchingStatsTeam,
+    tx: Prisma.TransactionClient,
+) {
     // Get the current season stats or create a new one if it doesn't exist
-    const seasonStats = await prisma.teamSeasonPitchingStats.findUnique({
+    const seasonStats = await tx.teamSeasonPitchingStats.findUnique({
         where: {
             teamId_seasonId: {
                 teamId: teamId,
@@ -544,7 +619,7 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
 
     if (!seasonStats) {
         // Create a new season stats record if it doesn't exist
-        await prisma.teamSeasonPitchingStats.create({
+        await tx.teamSeasonPitchingStats.create({
             data: {
                 teamId: teamId,
                 seasonId: seasonId,
@@ -592,7 +667,7 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
         });
     } else {
         // Update the existing season stats by adding the game stats
-        await prisma.teamSeasonPitchingStats.update({
+        await tx.teamSeasonPitchingStats.update({
             where: {
                 teamId_seasonId: {
                     teamId: teamId,
@@ -645,9 +720,14 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
     }
 }
 
-async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, gameStats: GameFieldingStatsTeam) {
+async function updateTeamSeasonFieldingStats(
+    teamId: number,
+    seasonId: number,
+    gameStats: GameFieldingStatsTeam,
+    tx: Prisma.TransactionClient,
+) {
     // Get the current season stats or create a new one if it doesn't exist
-    const seasonStats = await prisma.teamSeasonFieldingStats.findUnique({
+    const seasonStats = await tx.teamSeasonFieldingStats.findUnique({
         where: {
             teamId_seasonId: {
                 teamId: teamId,
@@ -658,7 +738,7 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
 
     if (!seasonStats) {
         // Create a new season stats record if it doesn't exist
-        await prisma.teamSeasonFieldingStats.create({
+        await tx.teamSeasonFieldingStats.create({
             data: {
                 teamId: teamId,
                 seasonId: seasonId,
@@ -675,7 +755,7 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
         });
     } else {
         // Update the existing season stats by adding the game stats
-        await prisma.teamSeasonFieldingStats.update({
+        await tx.teamSeasonFieldingStats.update({
             where: {
                 teamId_seasonId: {
                     teamId: teamId,
@@ -697,35 +777,6 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
     }
 }
 
-async function processPlayerStats(gameStats: GameStats, existingGame: Game, playerId: number) {
-    // check to see if this player already has stats for the game
-    const existingPlayerGameBattingStats = await prisma.playerGameBattingStats.findMany({
-        where: { gameId: existingGame.id, playerId: playerId },
-    });
-    const existingPlayerGamePitchingStats = await prisma.playerGamePitchingStats.findMany({
-        where: { gameId: existingGame.id, playerId: playerId },
-    });
-
-    if (existingPlayerGameBattingStats.length > 0 || existingPlayerGamePitchingStats.length > 0) {
-        console.log(`Player ${playerId} already has stats for game ${existingGame.id}. Skipping update.`);
-        return;
-    }
-
-    if (gameStats.batting && gameStats.batting !== undefined && Object.keys(gameStats.batting).length > 0) {
-        // log their game batting stats
-        await logPlayerGameBattingStats(playerId, existingGame.id, gameStats.batting);
-        // update their season batting stats
-        await updatePlayerSeasonBattingStats(playerId, existingGame.season_id, gameStats.batting);
-    }
-
-    if (gameStats.pitching && gameStats.pitching !== undefined && Object.keys(gameStats.pitching).length > 0) {
-        // log their game pitching stats
-        await logPlayerGamePitchingStats(gameStats.pitching, existingGame.id, playerId);
-        // update their season pitching stats
-        await updatePlayerSeasonPitchingStats(playerId, existingGame.season_id, gameStats.pitching);
-    }
-}
-
 async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existingGame: Game) {
     try {
         const playersByTeam = boxscore.teams;
@@ -733,7 +784,8 @@ async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existing
             const players = playersByTeam[teamKey].players;
             for (const playerId in players) {
                 const player = players[playerId];
-                // todo: get playerId from db as opposed to the mlb_api_id
+
+                // Find the player in the database outside of the transaction
                 const dbPlayer = await prisma.player.findUnique({
                     where: { mlb_api_id: player.person.id },
                 });
@@ -743,7 +795,96 @@ async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existing
                     continue;
                 }
 
-                await processPlayerStats(player.stats, existingGame, dbPlayer.id);
+                // Process each player's stats in a separate transaction
+                try {
+                    // Check if player already has stats for this game
+                    const existingPlayerGameBattingStats = await prisma.playerGameBattingStats.findUnique({
+                        where: { playerId_gameId: { playerId: dbPlayer.id, gameId: existingGame.id } },
+                    });
+                    const existingPlayerGamePitchingStats = await prisma.playerGamePitchingStats.findUnique({
+                        where: { playerId_gameId: { playerId: dbPlayer.id, gameId: existingGame.id } },
+                    });
+
+                    if (existingPlayerGameBattingStats || existingPlayerGamePitchingStats) {
+                        console.log(
+                            `Player ${dbPlayer.id} already has stats for game ${existingGame.id}. Skipping update.`,
+                        );
+                        continue;
+                    }
+
+                    // Process batting stats if available
+                    if (
+                        player.stats.batting &&
+                        player.stats.batting !== undefined &&
+                        Object.keys(player.stats.batting).length > 0
+                    ) {
+                        const battingStats = player.stats.batting as GameBatting;
+                        await prisma
+                            .$transaction(async (tx) => {
+                                // Log game batting stats
+                                await logPlayerGameBattingStats(dbPlayer.id, existingGame.id, battingStats, tx);
+                            })
+                            .catch((error) => {
+                                console.error(
+                                    `Error logging batting stats for player ${dbPlayer.id} in game ${existingGame.id}:`,
+                                    error,
+                                );
+                            });
+
+                        await prisma
+                            .$transaction(async (tx) => {
+                                // Update season batting stats
+                                await updatePlayerSeasonBattingStats(
+                                    dbPlayer.id,
+                                    existingGame.season_id,
+                                    battingStats,
+                                    tx,
+                                );
+                            })
+                            .catch((error) => {
+                                console.error(`Error updating season batting stats for player ${dbPlayer.id}:`, error);
+                            });
+                    }
+
+                    // Process pitching stats if available
+                    if (
+                        player.stats.pitching &&
+                        player.stats.pitching !== undefined &&
+                        Object.keys(player.stats.pitching).length > 0
+                    ) {
+                        const pitchingStats = player.stats.pitching as GamePitching;
+                        await prisma
+                            .$transaction(async (tx) => {
+                                // Log game pitching stats
+                                await logPlayerGamePitchingStats(pitchingStats, existingGame.id, dbPlayer.id, tx);
+                            })
+                            .catch((error) => {
+                                console.error(
+                                    `Error logging pitching stats for player ${dbPlayer.id} in game ${existingGame.id}:`,
+                                    error,
+                                );
+                            });
+
+                        await prisma
+                            .$transaction(async (tx) => {
+                                // Update season pitching stats
+                                await updatePlayerSeasonPitchingStats(
+                                    dbPlayer.id,
+                                    existingGame.season_id,
+                                    pitchingStats,
+                                    tx,
+                                );
+                            })
+                            .catch((error) => {
+                                console.error(`Error updating season pitching stats for player ${dbPlayer.id}:`, error);
+                            });
+                    }
+                } catch (error) {
+                    console.error(
+                        `Error processing stats for player ${dbPlayer.id} in game ${existingGame.id}:`,
+                        error,
+                    );
+                }
             }
         }
     } catch (error) {
@@ -751,8 +892,13 @@ async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existing
     }
 }
 
-async function logPlayerGameBattingStats(playerId: number, gameId: number, gameStats: GameBatting) {
-    await prisma.playerGameBattingStats.create({
+async function logPlayerGameBattingStats(
+    playerId: number,
+    gameId: number,
+    gameStats: GameBatting,
+    tx: Prisma.TransactionClient,
+) {
+    await tx.playerGameBattingStats.create({
         data: {
             playerId: playerId,
             gameId: gameId,
@@ -788,18 +934,23 @@ async function logPlayerGameBattingStats(playerId: number, gameId: number, gameS
     });
 }
 
-async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number, gameStats: GameBatting) {
-    const seasonStats = await prisma.playerSeasonBattingStats.findUnique({
+async function updatePlayerSeasonBattingStats(
+    playerId: number,
+    seasonId: number,
+    gameStats: GameBatting,
+    tx: Prisma.TransactionClient,
+) {
+    const seasonStats = await tx.playerSeasonBattingStats.findUnique({
         where: {
             playerId_seasonId: {
-                playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                playerId: playerId,
                 seasonId: seasonId,
             },
         },
     });
 
     if (!seasonStats) {
-        await prisma.playerSeasonBattingStats.create({
+        await tx.playerSeasonBattingStats.create({
             data: {
                 playerId: playerId,
                 seasonId: seasonId,
@@ -834,10 +985,10 @@ async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number
             },
         });
     } else {
-        await prisma.playerSeasonBattingStats.update({
+        await tx.playerSeasonBattingStats.update({
             where: {
                 playerId_seasonId: {
-                    playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                    playerId: playerId,
                     seasonId: seasonId,
                 },
             },
@@ -875,8 +1026,13 @@ async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number
     }
 }
 
-async function logPlayerGamePitchingStats(gameStats: GamePitching, gameId: number, playerId: number) {
-    await prisma.playerGamePitchingStats.create({
+async function logPlayerGamePitchingStats(
+    gameStats: GamePitching,
+    gameId: number,
+    playerId: number,
+    tx: Prisma.TransactionClient,
+) {
+    await tx.playerGamePitchingStats.create({
         data: {
             playerId: playerId,
             gameId: gameId,
@@ -950,18 +1106,23 @@ async function logPlayerGamePitchingStats(gameStats: GamePitching, gameId: numbe
     });
 }
 
-async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: number, gameStats: GamePitching) {
-    const seasonStats = await prisma.playerSeasonPitchingStats.findUnique({
+async function updatePlayerSeasonPitchingStats(
+    playerId: number,
+    seasonId: number,
+    gameStats: GamePitching,
+    tx: Prisma.TransactionClient,
+) {
+    const seasonStats = await tx.playerSeasonPitchingStats.findUnique({
         where: {
             playerId_seasonId: {
-                playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                playerId: playerId,
                 seasonId: seasonId,
             },
         },
     });
 
     if (!seasonStats) {
-        await prisma.playerSeasonPitchingStats.create({
+        await tx.playerSeasonPitchingStats.create({
             data: {
                 playerId: playerId,
                 seasonId: seasonId,
@@ -1023,10 +1184,10 @@ async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: numbe
             },
         });
     } else {
-        await prisma.playerSeasonPitchingStats.update({
+        await tx.playerSeasonPitchingStats.update({
             where: {
                 playerId_seasonId: {
-                    playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                    playerId: playerId,
                     seasonId: seasonId,
                 },
             },
