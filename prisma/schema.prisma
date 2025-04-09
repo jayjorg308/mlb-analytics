@@ -93,8 +93,6 @@ model Game {
   InningDetails           InningDetails[]
   TeamGameBattingStats    TeamGameBattingStats[]
   TeamGamePitchingStats   TeamGamePitchingStats[]
-  TeamRecord              TeamRecord[]
-  TeamELO                 TeamELO[]
   TeamGameFieldingStats   TeamGameFieldingStats[]
 
   @@index(date)
@@ -122,7 +120,7 @@ model Player {
   homeGamesPitched          Game[]                      @relation("HomePitcher")
   awayGamesPitched          Game[]                      @relation("AwayPitcher")
 
-  @@index([teamId, lastName]) // Fast sorting when listing a team's roster
+  @@index([teamId, lastName])
 }
 
 model PlayerGameBattingStats {
@@ -161,8 +159,7 @@ model PlayerGameBattingStats {
   lineOuts             Int
 
   @@id([playerId, gameId])
-  @@index([playerId]) // Fast queries for a player's game stats
-  @@index([gameId]) // Fast queries for a game's player stats
+  @@index([playerId, gameId])
 }
 
 model PlayerGamePitchingStats {
@@ -223,8 +220,7 @@ model PlayerGamePitchingStats {
   pitchingScore          Float?
 
   @@id([playerId, gameId])
-  @@index(playerId) // Fast queries for a player's game stats
-  @@index(gameId) // Fast queries for a game's player stats
+  @@index([playerId, gameId])
 }
 
 model PlayerSeasonBattingStats {
@@ -263,8 +259,7 @@ model PlayerSeasonBattingStats {
   lineOuts             Int
 
   @@id([playerId, seasonId])
-  @@index([playerId])
-  @@index([seasonId])
+  @@index([playerId, seasonId])
 }
 
 model PlayerSeasonPitchingStats {
@@ -320,11 +315,10 @@ model PlayerSeasonPitchingStats {
   passedBall             Int
   popOuts                Int
   lineOuts               Int
-  runningPitcherScore    Float? // A calculated score based on various pitching stats
+  runningPitcherScore    Float
 
   @@id([playerId, seasonId])
-  @@index(playerId)
-  @@index(seasonId)
+  @@index([playerId, seasonId])
 }
 
 model TeamGameBattingStats {
@@ -362,8 +356,7 @@ model TeamGameBattingStats {
   lineOuts             Int
 
   @@id([teamId, gameId])
-  @@index(teamId) // Fast queries for a teams's game stats
-  @@index(gameId) // Fast queries for a game's player stats
+  @@index([teamId, gameId])
 }
 
 model TeamGamePitchingStats {
@@ -413,8 +406,7 @@ model TeamGamePitchingStats {
   lineOuts               Int
 
   @@id([teamId, gameId])
-  @@index(teamId) // Fast queries for a team's game stats
-  @@index(gameId) // Fast queries for a game's player stats
+  @@index([teamId, gameId])
 }
 
 model TeamGameFieldingStats {
@@ -433,8 +425,7 @@ model TeamGameFieldingStats {
   pickOffs       Int
 
   @@id([teamId, gameId])
-  @@index(teamId)
-  @@index(gameId)
+  @@index([teamId, gameId])
 }
 
 model TeamSeasonBattingStats {
@@ -473,8 +464,7 @@ model TeamSeasonBattingStats {
   lineOuts             Int
 
   @@id([teamId, seasonId])
-  @@index(teamId)
-  @@index(seasonId)
+  @@index([teamId, seasonId])
 }
 
 model TeamSeasonPitchingStats {
@@ -525,8 +515,7 @@ model TeamSeasonPitchingStats {
   lineOuts               Int
 
   @@id([teamId, seasonId])
-  @@index(teamId)
-  @@index(seasonId)
+  @@index([teamId, seasonId])
 }
 
 model TeamSeasonFieldingStats {
@@ -546,8 +535,7 @@ model TeamSeasonFieldingStats {
   pickOffs       Int
 
   @@id([teamId, seasonId])
-  @@index(teamId)
-  @@index(seasonId)
+  @@index([teamId, seasonId])
 }
 
 model Injury {
@@ -569,8 +557,8 @@ model Venue {
   id         Int     @id @default(autoincrement())
   name       String  @db.VarChar(100)
   mlb_api_id Int     @unique
-  latitude   Decimal
-  longitude  Decimal
+  latitude   Float
+  longitude  Float
   address    String  @db.VarChar(255)
   city       String  @db.VarChar(100)
   state      String  @db.VarChar(100)
@@ -607,8 +595,6 @@ model InningDetails {
 }
 
 model TeamRecord {
-  id         Int @id @default(autoincrement())
-  gameId     Int // The game after which this record is set
   teamId     Int
   seasonId   Int
   wins       Int
@@ -620,24 +606,20 @@ model TeamRecord {
 
   team   Team   @relation(fields: [teamId], references: [id])
   season Season @relation(fields: [seasonId], references: [id])
-  game   Game   @relation(fields: [gameId], references: [id])
 
-  @@unique([teamId, gameId]) // Ensures only one record per team per game
-  @@index([seasonId, teamId, gameId]) // Faster lookups
+  @@id([teamId, seasonId])
+  @@index([teamId, seasonId])
 }
 
 model TeamELO {
-  id        Int     @id @default(autoincrement())
-  gameId    Int // The game after which this record is set
   teamId    Int
   seasonId  Int
-  elo       Decimal
-  eloChange Decimal
+  elo       Float
+  eloChange Float
 
   team   Team   @relation(fields: [teamId], references: [id])
   season Season @relation(fields: [seasonId], references: [id])
-  game   Game   @relation(fields: [gameId], references: [id])
 
-  @@unique([teamId, gameId]) // Ensures only one record per team per game
-  @@index([seasonId, teamId, gameId]) // Faster lookups
+  @@id([teamId, seasonId])
+  @@index([teamId, seasonId])
 }

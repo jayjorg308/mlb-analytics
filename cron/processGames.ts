@@ -188,7 +188,10 @@ async function updateTeamRecords(
     try {
         // Fetch current team records for this game
         const teamRecords = await tx.teamRecord.findMany({
-            where: { gameId: existingGame.id },
+            where: {
+                seasonId: existingGame.season_id,
+                teamId: { in: [existingGame.homeTeamId, existingGame.awayTeamId] },
+            },
         });
 
         if (teamRecords.length !== 2) {
@@ -201,8 +204,8 @@ async function updateTeamRecords(
             const isWinner = record.teamId === winningTeamId;
 
             // Update the current game record
-            const updatedRecord = await tx.teamRecord.update({
-                where: { id: record.id },
+            await tx.teamRecord.update({
+                where: { teamId_seasonId: { teamId: record.teamId, seasonId: existingGame.season_id } },
                 data: {
                     wins: isWinner ? record.wins + 1 : record.wins,
                     losses: !isWinner ? record.losses + 1 : record.losses,
@@ -212,32 +215,6 @@ async function updateTeamRecords(
                     awayLosses: !isHomeTeam && !isWinner ? record.awayLosses + 1 : record.awayLosses,
                 },
             });
-
-            // **Find the next scheduled game for this team**
-            const nextGameRecord = await tx.teamRecord.findFirst({
-                where: {
-                    teamId: record.teamId,
-                    gameId: { gt: existingGame.id }, // Next game after current game
-                },
-                orderBy: { gameId: "asc" },
-            });
-
-            if (nextGameRecord) {
-                // Carry forward updated stats to next game
-                await tx.teamRecord.update({
-                    where: { id: nextGameRecord.id },
-                    data: {
-                        wins: updatedRecord.wins,
-                        losses: updatedRecord.losses,
-                        homeWins: updatedRecord.homeWins,
-                        homeLosses: updatedRecord.homeLosses,
-                        awayWins: updatedRecord.awayWins,
-                        awayLosses: updatedRecord.awayLosses,
-                    },
-                });
-
-                console.log(`Carried forward record to next game ${nextGameRecord.gameId} for team ${record.teamId}`);
-            }
         }
     } catch (error) {
         console.error(`Error updating team records for game ${game.gamePk}:`, error);
@@ -254,7 +231,10 @@ async function updateTeamElo(
     try {
         // Fetch current team ELO records for this game
         const teamELOs = await tx.teamELO.findMany({
-            where: { gameId: existingGame.id },
+            where: {
+                seasonId: existingGame.season_id,
+                teamId: { in: [existingGame.homeTeamId, existingGame.awayTeamId] },
+            },
         });
 
         const homeElo = teamELOs.find((elo) => elo.teamId === existingGame.homeTeamId);
@@ -266,8 +246,8 @@ async function updateTeamElo(
         }
 
         const eloData = updateElo({
-            homeElo: homeElo.elo.toNumber(),
-            awayElo: awayElo.elo.toNumber(),
+            homeElo: homeElo.elo,
+            awayElo: awayElo.elo,
             homeScore: homeTeamRuns,
             awayScore: awayTeamRuns,
             isPlayoff: existingGame.isPostseason,
@@ -277,35 +257,14 @@ async function updateTeamElo(
         for (const elo of teamELOs) {
             const isHomeTeam = elo.teamId === existingGame.homeTeamId;
 
-            // Update the current game record
-            const updatedEloRecord = await tx.teamELO.update({
-                where: { id: elo.id },
+            // Update team's ELO
+            await tx.teamELO.update({
+                where: { teamId_seasonId: { teamId: elo.teamId, seasonId: elo.seasonId } },
                 data: {
                     elo: isHomeTeam ? eloData.newHomeElo : eloData.newAwayElo,
                     eloChange: isHomeTeam ? eloData.eloChange : -eloData.eloChange,
                 },
             });
-
-            // **Find the next scheduled game for this team**
-            const nextGameELO = await tx.teamELO.findFirst({
-                where: {
-                    teamId: elo.teamId,
-                    gameId: { gt: existingGame.id }, // Next game after current game
-                },
-                orderBy: { gameId: "asc" },
-            });
-
-            if (nextGameELO) {
-                // Carry forward updated stats to next game
-                await tx.teamELO.update({
-                    where: { id: nextGameELO.id },
-                    data: {
-                        elo: updatedEloRecord.elo,
-                    },
-                });
-
-                console.log(`Carried forward ELO to next game ${nextGameELO.gameId} for team ${nextGameELO.teamId}`);
-            }
         }
     } catch (error) {
         console.error(`Error updating Elo for game ${game.gamePk}:`, error);
