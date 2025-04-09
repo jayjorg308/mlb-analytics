@@ -1,4 +1,4 @@
-import { Game, GameStatus, PrismaClient } from "@prisma/client";
+import { Game, GameStatus, PitcherDecision, PrismaClient } from "@prisma/client";
 import axios from "axios";
 import { updateElo } from "./updateElo";
 import {
@@ -10,6 +10,9 @@ import {
     GameBattingStatsTeam,
     GamePitchingStatsTeam,
     GameFieldingStatsTeam,
+    GameStats,
+    GameBatting,
+    GamePitching,
 } from "./interfaces";
 
 const prisma = new PrismaClient();
@@ -34,28 +37,25 @@ async function processGame(game: GameDetails, existingGame: Game) {
     const homeTeamWon = homeTeamRuns > awayTeamRuns;
     const winningTeamId = homeTeamWon ? existingGame.homeTeamId : existingGame.awayTeamId;
 
-    // UPDATE SCORE AND STATUS DONE
+    // UPDATE SCORE AND STATUS
     await updateFinalScoreAndStatus(awayTeamRuns, homeTeamRuns, winningTeamId, game);
 
-    // INNINGS DONE
+    // CREATE INNING DETAILS
     await insertInningDetails(liveData.linescore.innings, existingGame.id, game.gamePk);
 
-    // TEAM RECORDS DONE
+    // UPDATE TEAM RECORDS
     await updateTeamRecords(winningTeamId, game, existingGame);
 
-    // ELO DONE
+    // UPDATE TEAM ELO
     await updateTeamElo(awayTeamRuns, homeTeamRuns, game, existingGame);
 
-    // todo: implement update player game stats
-    // await updatePlayerGameStats(game, existingGame);
+    // CREATE/UPDATE PLAYER STATS
+    await updatePlayerStats(liveData.boxscore, game, existingGame);
 
-    // todo: implement update player season stats
-    // await updatePlayerSeasonStats(game, existingGame);
-
-    // TEAM GAME STATS DONE
+    // CREATE TEAM GAME STATS
     await updateTeamGameStats(liveData.boxscore, game, existingGame);
 
-    // TEAM SEASON STATS DONE
+    // UPDATE TEAM SEASON STATS
     await updateTeamSeasonStats(liveData.boxscore, game, existingGame);
 }
 
@@ -257,38 +257,6 @@ async function updateTeamElo(awayTeamRuns: number, homeTeamRuns: number, game: G
     }
 }
 
-// todo: implement this
-// async function updatePlayerGameStats(game: GameFromAPI, existingGame: Game) {
-//     // Loop over player stats and insert/update player-game stat records
-//     const playerStats = game.liveData?.boxscore?.players ?? {};
-
-//     for (const playerId in playerStats) {
-//         const playerData = playerStats[playerId];
-//         const stats = playerData.stats?.batting ?? {}; // or pitching, fielding, etc.
-
-//         if (!playerData.person?.id || !stats) continue;
-
-//         await prisma.playerGameStats.create({
-//             data: {
-//                 playerId: playerData.person.id.toString(),
-//                 gameId: existingGame.id,
-//                 hits: stats.hits ?? 0,
-//                 atBats: stats.atBats ?? 0,
-//                 homeRuns: stats.homeRuns ?? 0,
-//                 // add more as needed
-//             },
-//         });
-//     }
-// }
-
-// todo: implement this
-// async function updatePlayerSeasonStats(game: GameFromAPI, existingGame: Game) {
-//     // Stub: you'll likely want to sum up playerGameStats by season
-//     // Could be an aggregation or an upsert-style update
-
-//     console.log(`Player season stats update for Game ${game.gamePk} not implemented.`);
-// }
-
 async function updateTeamGameStats(boxscore: Boxscore, game: GameDetails, existingGame: Game) {
     try {
         if (!boxscore) return;
@@ -476,7 +444,7 @@ async function updateTeamSeasonStats(boxscore: Boxscore, game: GameDetails, exis
 async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, gameStats: GameBattingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonBattingStats.findUnique({
-        where: { teamId: teamId },
+        where: { teamId: teamId, seasonId: seasonId },
     });
 
     if (!seasonStats) {
@@ -518,7 +486,7 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonBattingStats.update({
-            where: { teamId: teamId },
+            where: { teamId: teamId, seasonId: seasonId },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 flyOuts: seasonStats.flyOuts + gameStats.flyOuts,
@@ -556,7 +524,7 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
 async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, gameStats: GamePitchingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonPitchingStats.findUnique({
-        where: { teamId: teamId },
+        where: { teamId: teamId, seasonId: seasonId },
     });
 
     if (!seasonStats) {
@@ -610,7 +578,7 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonPitchingStats.update({
-            where: { teamId: teamId },
+            where: { teamId: teamId, seasonId: seasonId },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 flyouts: seasonStats.flyouts + gameStats.flyOuts,
@@ -660,7 +628,7 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
 async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, gameStats: GameFieldingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonFieldingStats.findUnique({
-        where: { teamId: teamId },
+        where: { teamId: teamId, seasonId: seasonId },
     });
 
     if (!seasonStats) {
@@ -683,7 +651,7 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonFieldingStats.update({
-            where: { teamId: teamId },
+            where: { teamId: teamId, seasonId: seasonId },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
@@ -694,6 +662,373 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
                 chances: seasonStats.chances + gameStats.chances,
                 passedBall: seasonStats.passedBall + gameStats.passedBall,
                 pickOffs: seasonStats.pickOffs + gameStats.pickoffs,
+            },
+        });
+    }
+}
+
+async function processPlayerStats(gameStats: GameStats, existingGame: Game, playerId: number) {
+    // check to see if this player already has stats for the game
+    const existingPlayerGameBattingStats = await prisma.playerGameBattingStats.findMany({
+        where: { gameId: existingGame.id, playerId: playerId },
+    });
+    const existingPlayerGamePitchingStats = await prisma.playerGamePitchingStats.findMany({
+        where: { gameId: existingGame.id, playerId: playerId },
+    });
+
+    if (existingPlayerGameBattingStats.length > 0 || existingPlayerGamePitchingStats.length > 0) {
+        console.log(`Player ${playerId} already has stats for game ${existingGame.id}. Skipping update.`);
+        return;
+    }
+
+    if (gameStats.batting && gameStats.batting !== undefined && Object.keys(gameStats.batting).length > 0) {
+        // log their game batting stats
+        await logPlayerGameBattingStats(playerId, existingGame.id, gameStats.batting);
+        // update their season batting stats
+        await updatePlayerSeasonBattingStats(playerId, existingGame.season_id, gameStats.batting);
+    }
+
+    if (gameStats.pitching && gameStats.pitching !== undefined && Object.keys(gameStats.pitching).length > 0) {
+        // log their game pitching stats
+        await logPlayerGamePitchingStats(gameStats.pitching, existingGame.id, playerId);
+        // update their season pitching stats
+        await updatePlayerSeasonPitchingStats(playerId, existingGame.season_id, gameStats.pitching);
+    }
+}
+
+async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existingGame: Game) {
+    try {
+        const playersByTeam = boxscore.teams;
+        for (const teamKey of ["home", "away"] as const) {
+            const players = playersByTeam[teamKey].players;
+            for (const playerId in players) {
+                const player = players[playerId];
+                await processPlayerStats(player.stats, existingGame, player.person.id);
+            }
+        }
+    } catch (error) {
+        console.error(`Error updating player game stats for game ${game.gamePk}:`, error);
+    }
+}
+
+async function logPlayerGameBattingStats(playerId: number, gameId: number, gameStats: GameBatting) {
+    await prisma.playerGameBattingStats.create({
+        data: {
+            playerId: playerId,
+            gameId: gameId,
+            summary: gameStats.summary,
+            flyOuts: gameStats.flyOuts,
+            groundOuts: gameStats.groundOuts,
+            airOuts: gameStats.airOuts,
+            runs: gameStats.runs,
+            doubles: gameStats.doubles,
+            triples: gameStats.triples,
+            homeRuns: gameStats.homeRuns,
+            strikeOuts: gameStats.strikeOuts,
+            baseOnBalls: gameStats.baseOnBalls,
+            intentionalWalks: gameStats.intentionalWalks,
+            hits: gameStats.hits,
+            hitByPitch: gameStats.hitByPitch,
+            atBats: gameStats.atBats,
+            caughtStealing: gameStats.caughtStealing,
+            stolenBases: gameStats.stolenBases,
+            groundIntoDoublePlay: gameStats.groundIntoDoublePlay,
+            groundIntoTriplePlay: gameStats.groundIntoTriplePlay,
+            plateAppearances: gameStats.plateAppearances,
+            totalBases: gameStats.totalBases,
+            rbi: gameStats.rbi,
+            leftOnBase: gameStats.leftOnBase,
+            sacBunts: gameStats.sacBunts,
+            sacFlies: gameStats.sacFlies,
+            catchersInterference: gameStats.catchersInterference,
+            pickoffs: gameStats.pickoffs,
+            popOuts: gameStats.popOuts,
+            lineOuts: gameStats.lineOuts,
+        },
+    });
+}
+
+async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number, gameStats: GameBatting) {
+    const seasonStats = await prisma.playerSeasonBattingStats.findUnique({
+        where: { playerId: playerId, seasonId: seasonId },
+    });
+
+    if (!seasonStats) {
+        await prisma.playerSeasonBattingStats.create({
+            data: {
+                playerId: playerId,
+                seasonId: seasonId,
+                gamesPlayed: gameStats.gamesPlayed,
+                flyOuts: gameStats.flyOuts,
+                groundOuts: gameStats.groundOuts,
+                airOuts: gameStats.airOuts,
+                runs: gameStats.runs,
+                doubles: gameStats.doubles,
+                triples: gameStats.triples,
+                homeRuns: gameStats.homeRuns,
+                strikeOuts: gameStats.strikeOuts,
+                baseOnBalls: gameStats.baseOnBalls,
+                intentionalWalks: gameStats.intentionalWalks,
+                hits: gameStats.hits,
+                hitByPitch: gameStats.hitByPitch,
+                atBats: gameStats.atBats,
+                caughtStealing: gameStats.caughtStealing,
+                stolenBases: gameStats.stolenBases,
+                groundIntoDoublePlay: gameStats.groundIntoDoublePlay,
+                groundIntoTriplePlay: gameStats.groundIntoTriplePlay,
+                plateAppearances: gameStats.plateAppearances,
+                totalBases: gameStats.totalBases,
+                rbi: gameStats.rbi,
+                leftOnBase: gameStats.leftOnBase,
+                sacBunts: gameStats.sacBunts,
+                sacFlies: gameStats.sacFlies,
+                catchersInterference: gameStats.catchersInterference,
+                pickoffs: gameStats.pickoffs,
+                popOuts: gameStats.popOuts,
+                lineOuts: gameStats.lineOuts,
+            },
+        });
+    } else {
+        await prisma.playerSeasonBattingStats.update({
+            where: { playerId: playerId, seasonId: seasonId },
+            data: {
+                gamesPlayed: seasonStats.gamesPlayed + gameStats.gamesPlayed,
+                flyOuts: seasonStats.flyOuts + gameStats.flyOuts,
+                groundOuts: seasonStats.groundOuts + gameStats.groundOuts,
+                airOuts: seasonStats.airOuts + gameStats.airOuts,
+                runs: seasonStats.runs + gameStats.runs,
+                doubles: seasonStats.doubles + gameStats.doubles,
+                triples: seasonStats.triples + gameStats.triples,
+                homeRuns: seasonStats.homeRuns + gameStats.homeRuns,
+                strikeOuts: seasonStats.strikeOuts + gameStats.strikeOuts,
+                baseOnBalls: seasonStats.baseOnBalls + gameStats.baseOnBalls,
+                intentionalWalks: seasonStats.intentionalWalks + gameStats.intentionalWalks,
+                hits: seasonStats.hits + gameStats.hits,
+                hitByPitch: seasonStats.hitByPitch + gameStats.hitByPitch,
+                atBats: seasonStats.atBats + gameStats.atBats,
+                caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
+                stolenBases: seasonStats.stolenBases + gameStats.stolenBases,
+                groundIntoDoublePlay: seasonStats.groundIntoDoublePlay + gameStats.groundIntoDoublePlay,
+                groundIntoTriplePlay: seasonStats.groundIntoTriplePlay + gameStats.groundIntoTriplePlay,
+                plateAppearances: seasonStats.plateAppearances + gameStats.plateAppearances,
+                totalBases: seasonStats.totalBases + gameStats.totalBases,
+                rbi: seasonStats.rbi + gameStats.rbi,
+                leftOnBase: seasonStats.leftOnBase + gameStats.leftOnBase,
+                sacBunts: seasonStats.sacBunts + gameStats.sacBunts,
+                sacFlies: seasonStats.sacFlies + gameStats.sacFlies,
+                catchersInterference: seasonStats.catchersInterference + gameStats.catchersInterference,
+                pickoffs: seasonStats.pickoffs + gameStats.pickoffs,
+                popOuts: seasonStats.popOuts + gameStats.popOuts,
+                lineOuts: seasonStats.lineOuts + gameStats.lineOuts,
+            },
+        });
+    }
+}
+
+async function logPlayerGamePitchingStats(gameStats: GamePitching, gameId: number, playerId: number) {
+    await prisma.playerGamePitchingStats.create({
+        data: {
+            playerId: playerId,
+            gameId: gameId,
+            decision:
+                gameStats.wins === 1
+                    ? PitcherDecision.WIN
+                    : gameStats.losses === 1
+                    ? PitcherDecision.LOSS
+                    : gameStats.saves === 1
+                    ? PitcherDecision.SAVE
+                    : gameStats.holds === 1
+                    ? PitcherDecision.HOLD
+                    : PitcherDecision.NO_DECISION,
+            summary: gameStats.summary,
+            gamesPlayed: gameStats.gamesPlayed,
+            gamesStarted: gameStats.gamesStarted,
+            flyouts: gameStats.flyOuts,
+            groundOuts: gameStats.groundOuts,
+            airOuts: gameStats.airOuts,
+            runs: gameStats.runs,
+            doubles: gameStats.doubles,
+            triples: gameStats.triples,
+            homeRuns: gameStats.homeRuns,
+            strikeOuts: gameStats.strikeOuts,
+            baseOnBalls: gameStats.baseOnBalls,
+            intentionalWalks: gameStats.intentionalWalks,
+            hits: gameStats.hits,
+            hitByPitch: gameStats.hitByPitch,
+            atBats: gameStats.atBats,
+            caughtStealing: gameStats.caughtStealing,
+            stolenBases: gameStats.stolenBases,
+            numberOfPitches: gameStats.numberOfPitches,
+            inningsPitched: parseFloat(gameStats.inningsPitched),
+            wins: gameStats.wins,
+            losses: gameStats.losses,
+            saves: gameStats.saves,
+            saveOpporunities: gameStats.saveOpportunities,
+            holds: gameStats.holds,
+            blownSaves: gameStats.blownSaves,
+            earnedRuns: gameStats.earnedRuns,
+            battersFaced: gameStats.battersFaced,
+            outs: gameStats.outs,
+            completeGames: gameStats.completeGames,
+            shutouts: gameStats.shutouts,
+            pitchesThrown: gameStats.pitchesThrown,
+            balls: gameStats.balls,
+            strikes: gameStats.strikes,
+            hitBatsmen: gameStats.hitBatsmen,
+            balks: gameStats.balks,
+            wildPitches: gameStats.wildPitches,
+            pickoffs: gameStats.pickoffs,
+            rbi: gameStats.rbi,
+            gamesFinished: gameStats.gamesFinished,
+            inheritedRunners: gameStats.inheritedRunners,
+            inheritedRunnersScored: gameStats.inheritedRunnersScored,
+            catchersInterference: gameStats.catchersInterference,
+            sacBunts: gameStats.sacBunts,
+            sacFlies: gameStats.sacFlies,
+            passedBall: gameStats.passedBall,
+            popOuts: gameStats.popOuts,
+            lineOuts: gameStats.lineOuts,
+            pitchingScore:
+                47.4 +
+                1.5 * gameStats.outs +
+                gameStats.strikeOuts -
+                2 * gameStats.baseOnBalls -
+                2 * gameStats.hits -
+                3 * gameStats.runs -
+                4 * gameStats.homeRuns,
+        },
+    });
+}
+
+async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: number, gameStats: GamePitching) {
+    const seasonStats = await prisma.playerSeasonPitchingStats.findUnique({
+        where: { playerId: playerId, seasonId: seasonId },
+    });
+
+    if (!seasonStats) {
+        await prisma.playerSeasonPitchingStats.create({
+            data: {
+                playerId: playerId,
+                seasonId: seasonId,
+                gamesPlayed: gameStats.gamesPlayed,
+                gamesStarted: gameStats.gamesStarted,
+                flyouts: gameStats.flyOuts,
+                groundOuts: gameStats.groundOuts,
+                airOuts: gameStats.airOuts,
+                runs: gameStats.runs,
+                doubles: gameStats.doubles,
+                triples: gameStats.triples,
+                homeRuns: gameStats.homeRuns,
+                strikeOuts: gameStats.strikeOuts,
+                baseOnBalls: gameStats.baseOnBalls,
+                intentionalWalks: gameStats.intentionalWalks,
+                hits: gameStats.hits,
+                hitByPitch: gameStats.hitByPitch,
+                atBats: gameStats.atBats,
+                caughtStealing: gameStats.caughtStealing,
+                stolenBases: gameStats.stolenBases,
+                numberOfPitches: gameStats.numberOfPitches,
+                inningsPitched: parseFloat(gameStats.inningsPitched),
+                wins: gameStats.wins,
+                losses: gameStats.losses,
+                saves: gameStats.saves,
+                saveOpporunities: gameStats.saveOpportunities,
+                holds: gameStats.holds,
+                blownSaves: gameStats.blownSaves,
+                earnedRuns: gameStats.earnedRuns,
+                battersFaced: gameStats.battersFaced,
+                outs: gameStats.outs,
+                completeGames: gameStats.completeGames,
+                shutouts: gameStats.shutouts,
+                pitchesThrown: gameStats.pitchesThrown,
+                balls: gameStats.balls,
+                strikes: gameStats.strikes,
+                hitBatsmen: gameStats.hitBatsmen,
+                balks: gameStats.balks,
+                wildPitches: gameStats.wildPitches,
+                pickoffs: gameStats.pickoffs,
+                rbi: gameStats.rbi,
+                gamesFinished: gameStats.gamesFinished,
+                inheritedRunners: gameStats.inheritedRunners,
+                inheritedRunnersScored: gameStats.inheritedRunnersScored,
+                catchersInterference: gameStats.catchersInterference,
+                sacBunts: gameStats.sacBunts,
+                sacFlies: gameStats.sacFlies,
+                passedBall: gameStats.passedBall,
+                popOuts: gameStats.popOuts,
+                lineOuts: gameStats.lineOuts,
+                runningPitcherScore:
+                    47.4 +
+                    1.5 * gameStats.outs +
+                    gameStats.strikeOuts -
+                    2 * gameStats.baseOnBalls -
+                    2 * gameStats.hits -
+                    3 * gameStats.runs -
+                    4 * gameStats.homeRuns,
+            },
+        });
+    } else {
+        await prisma.playerSeasonPitchingStats.update({
+            where: { playerId: playerId, seasonId: seasonId },
+            data: {
+                gamesPlayed: seasonStats.gamesPlayed + gameStats.gamesPlayed,
+                gamesStarted: seasonStats.gamesStarted + gameStats.gamesStarted,
+                flyouts: seasonStats.flyouts + gameStats.flyOuts,
+                groundOuts: seasonStats.groundOuts + gameStats.groundOuts,
+                airOuts: seasonStats.airOuts + gameStats.airOuts,
+                runs: seasonStats.runs + gameStats.runs,
+                doubles: seasonStats.doubles + gameStats.doubles,
+                triples: seasonStats.triples + gameStats.triples,
+                homeRuns: seasonStats.homeRuns + gameStats.homeRuns,
+                strikeOuts: seasonStats.strikeOuts + gameStats.strikeOuts,
+                baseOnBalls: seasonStats.baseOnBalls + gameStats.baseOnBalls,
+                intentionalWalks: seasonStats.intentionalWalks + gameStats.intentionalWalks,
+                hits: seasonStats.hits + gameStats.hits,
+                hitByPitch: seasonStats.hitByPitch + gameStats.hitByPitch,
+                atBats: seasonStats.atBats + gameStats.atBats,
+                caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
+                stolenBases: seasonStats.stolenBases + gameStats.stolenBases,
+                numberOfPitches: seasonStats.numberOfPitches + gameStats.numberOfPitches,
+                inningsPitched: seasonStats.inningsPitched + parseFloat(gameStats.inningsPitched),
+                wins: seasonStats.wins + gameStats.wins,
+                losses: seasonStats.losses + gameStats.losses,
+                saves: seasonStats.saves + gameStats.saves,
+                saveOpporunities: seasonStats.saveOpporunities + gameStats.saveOpportunities,
+                holds: seasonStats.holds + gameStats.holds,
+                blownSaves: seasonStats.blownSaves + gameStats.blownSaves,
+                earnedRuns: seasonStats.earnedRuns + gameStats.earnedRuns,
+                battersFaced: seasonStats.battersFaced + gameStats.battersFaced,
+                outs: seasonStats.outs + gameStats.outs,
+                completeGames: seasonStats.completeGames + gameStats.completeGames,
+                shutouts: seasonStats.shutouts + gameStats.shutouts,
+                pitchesThrown: seasonStats.pitchesThrown + gameStats.pitchesThrown,
+                balls: seasonStats.balls + gameStats.balls,
+                strikes: seasonStats.strikes + gameStats.strikes,
+                hitBatsmen: seasonStats.hitBatsmen + gameStats.hitBatsmen,
+                balks: seasonStats.balks + gameStats.balks,
+                wildPitches: seasonStats.wildPitches + gameStats.wildPitches,
+                pickoffs: seasonStats.pickoffs + gameStats.pickoffs,
+                rbi: seasonStats.rbi + gameStats.rbi,
+                gamesFinished: seasonStats.gamesFinished + gameStats.gamesFinished,
+                inheritedRunners: seasonStats.inheritedRunners + gameStats.inheritedRunners,
+                inheritedRunnersScored: seasonStats.inheritedRunnersScored + gameStats.inheritedRunnersScored,
+                catchersInterference: seasonStats.catchersInterference + gameStats.catchersInterference,
+                sacBunts: seasonStats.sacBunts + gameStats.sacBunts,
+                sacFlies: seasonStats.sacFlies + gameStats.sacFlies,
+                passedBall: seasonStats.passedBall + gameStats.passedBall,
+                popOuts: seasonStats.popOuts + gameStats.popOuts,
+                lineOuts: seasonStats.lineOuts + gameStats.lineOuts,
+                runningPitcherScore:
+                    seasonStats.runningPitcherScore?.toNumber() ??
+                    0 +
+                        (47.4 +
+                            1.5 * gameStats.outs +
+                            gameStats.strikeOuts -
+                            2 * gameStats.baseOnBalls -
+                            2 * gameStats.hits -
+                            3 * gameStats.runs -
+                            4 * gameStats.homeRuns) /
+                            (seasonStats.gamesPlayed + gameStats.gamesPlayed),
             },
         });
     }

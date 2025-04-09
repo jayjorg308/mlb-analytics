@@ -42,6 +42,203 @@ export interface BoxscoreTeams {
 
 export interface TeamBoxscoreStats {
     teamStats: TeamStats;
+    players: Record<string, PlayerBoxscore>;
+}
+
+export interface PlayerBoxscore {
+    person: {
+        id: number;
+    };
+    stats: GameStats;
+}
+
+export interface GameStats {
+    batting?: GameBatting;
+    pitching?: GamePitching;
+}
+
+export interface SeasonStats {
+    batting: SeasonBatting;
+    pitching: SeasonPitching;
+}
+
+export interface GameBatting {
+    summary: string;
+    gamesPlayed: number;
+    flyOuts: number;
+    groundOuts: number;
+    airOuts: number;
+    runs: number;
+    doubles: number;
+    triples: number;
+    homeRuns: number;
+    strikeOuts: number;
+    baseOnBalls: number;
+    intentionalWalks: number;
+    hits: number;
+    hitByPitch: number;
+    atBats: number;
+    caughtStealing: number;
+    stolenBases: number;
+    stolenBasePercentage: string;
+    groundIntoDoublePlay: number;
+    groundIntoTriplePlay: number;
+    plateAppearances: number;
+    totalBases: number;
+    rbi: number;
+    leftOnBase: number;
+    sacBunts: number;
+    sacFlies: number;
+    catchersInterference: number;
+    pickoffs: number;
+    atBatsPerHomeRun: string;
+    popOuts: number;
+    lineOuts: number;
+}
+
+export interface SeasonBatting {
+    gamesPlayed: number;
+    flyOuts: number;
+    groundOuts: number;
+    airOuts: number;
+    runs: number;
+    doubles: number;
+    triples: number;
+    homeRuns: number;
+    strikeOuts: number;
+    baseOnBalls: number;
+    intentionalWalks: number;
+    hits: number;
+    hitByPitch: number;
+    atBats: number;
+    caughtStealing: number;
+    stolenBases: number;
+    stolenBasePercentage: string;
+    groundIntoDoublePlay: number;
+    groundIntoTriplePlay: number;
+    plateAppearances: number;
+    totalBases: number;
+    rbi: number;
+    leftOnBase: number;
+    sacBunts: number;
+    sacFlies: number;
+    catchersInterference: number;
+    pickoffs: number;
+    atBatsPerHomeRun: string;
+    popOuts: number;
+    lineOuts: number;
+}
+
+export interface GamePitching {
+    note: string;
+    summary: string;
+    gamesPlayed: number;
+    gamesStarted: number;
+    flyOuts: number;
+    groundOuts: number;
+    airOuts: number;
+    runs: number;
+    doubles: number;
+    triples: number;
+    homeRuns: number;
+    strikeOuts: number;
+    baseOnBalls: number;
+    intentionalWalks: number;
+    hits: number;
+    hitByPitch: number;
+    atBats: number;
+    caughtStealing: number;
+    stolenBases: number;
+    stolenBasePercentage: string;
+    numberOfPitches: number;
+    inningsPitched: string;
+    wins: number;
+    losses: number;
+    saves: number;
+    saveOpportunities: number;
+    holds: number;
+    blownSaves: number;
+    earnedRuns: number;
+    battersFaced: number;
+    outs: number;
+    gamesPitched: number;
+    completeGames: number;
+    shutouts: number;
+    pitchesThrown: number;
+    balls: number;
+    strikes: number;
+    strikePercentage: string;
+    hitBatsmen: number;
+    balks: number;
+    wildPitches: number;
+    pickoffs: number;
+    rbi: number;
+    gamesFinished: number;
+    runsScoredPer9: string;
+    homeRunsPer9: string;
+    inheritedRunners: number;
+    inheritedRunnersScored: number;
+    catchersInterference: number;
+    sacBunts: number;
+    sacFlies: number;
+    passedBall: number;
+    popOuts: number;
+    lineOuts: number;
+}
+
+export interface SeasonPitching {
+    gamesPlayed: number;
+    gamesStarted: number;
+    flyOuts: number;
+    groundOuts: number;
+    airOuts: number;
+    runs: number;
+    doubles: number;
+    triples: number;
+    homeRuns: number;
+    strikeOuts: number;
+    baseOnBalls: number;
+    intentionalWalks: number;
+    hits: number;
+    hitByPitch: number;
+    atBats: number;
+    caughtStealing: number;
+    stolenBases: number;
+    stolenBasePercentage: string;
+    numberOfPitches: number;
+    inningsPitched: string;
+    wins: number;
+    losses: number;
+    saves: number;
+    saveOpportunities: number;
+    holds: number;
+    blownSaves: number;
+    earnedRuns: number;
+    battersFaced: number;
+    outs: number;
+    gamesPitched: number;
+    completeGames: number;
+    shutouts: number;
+    pitchesThrown: number;
+    balls: number;
+    strikes: number;
+    strikePercentage: string;
+    hitBatsmen: number;
+    balks: number;
+    wildPitches: number;
+    pickoffs: number;
+    rbi: number;
+    gamesFinished: number;
+    runsScoredPer9: string;
+    homeRunsPer9: string;
+    inheritedRunners: number;
+    inheritedRunnersScored: number;
+    catchersInterference: number;
+    sacBunts: number;
+    sacFlies: number;
+    passedBall: number;
+    popOuts: number;
+    lineOuts: number;
 }
 
 export interface TeamStats {
