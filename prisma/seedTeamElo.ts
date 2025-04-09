@@ -43,32 +43,22 @@ async function seedTeamELO() {
 
         for (const team of teams) {
             const elo = teamELO.find((t) => t.teamId === team.id)?.elo || null;
-            if (!elo || elo === null) {
-                console.log(`No ELO found for team ${team.name}, skipping...`);
+
+            if (!elo) {
+                console.log(`No ELO found for team ${team.name}`);
                 continue;
             }
-
-            // get all games for team from database
-            const games = await prisma.game.findMany({
-                where: {
-                    OR: [{ homeTeamId: team.id }, { awayTeamId: team.id }],
+            // Insert player into the database
+            await prisma.teamELO.create({
+                data: {
+                    teamId: team.id,
+                    seasonId: 1,
+                    elo: elo,
+                    eloChange: 0,
                 },
             });
 
-            for (const game of games) {
-                // Insert player into the database
-                await prisma.teamELO.create({
-                    data: {
-                        gameId: game.id,
-                        teamId: team.id,
-                        seasonId: 1,
-                        elo: elo,
-                        eloChange: 0,
-                    },
-                });
-
-                console.log(`Seeded game ELO for team ${team.name} in game ${game.id}`);
-            }
+            console.log(`Seeded game ELO for team ${team.name}`);
         }
 
         console.log("✅ Finished seeding Team ELOs.");
