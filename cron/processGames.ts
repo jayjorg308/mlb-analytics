@@ -444,7 +444,12 @@ async function updateTeamSeasonStats(boxscore: Boxscore, game: GameDetails, exis
 async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, gameStats: GameBattingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonBattingStats.findUnique({
-        where: { teamId: teamId, seasonId: seasonId },
+        where: {
+            teamId_seasonId: {
+                teamId: teamId,
+                seasonId: seasonId,
+            },
+        },
     });
 
     if (!seasonStats) {
@@ -486,7 +491,12 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonBattingStats.update({
-            where: { teamId: teamId, seasonId: seasonId },
+            where: {
+                teamId_seasonId: {
+                    teamId: teamId,
+                    seasonId: seasonId,
+                },
+            },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 flyOuts: seasonStats.flyOuts + gameStats.flyOuts,
@@ -524,7 +534,12 @@ async function updateTeamSeasonBattingStats(teamId: number, seasonId: number, ga
 async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, gameStats: GamePitchingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonPitchingStats.findUnique({
-        where: { teamId: teamId, seasonId: seasonId },
+        where: {
+            teamId_seasonId: {
+                teamId: teamId,
+                seasonId: seasonId,
+            },
+        },
     });
 
     if (!seasonStats) {
@@ -578,7 +593,12 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonPitchingStats.update({
-            where: { teamId: teamId, seasonId: seasonId },
+            where: {
+                teamId_seasonId: {
+                    teamId: teamId,
+                    seasonId: seasonId,
+                },
+            },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 flyouts: seasonStats.flyouts + gameStats.flyOuts,
@@ -628,7 +648,12 @@ async function updateTeamSeasonPitchingStats(teamId: number, seasonId: number, g
 async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, gameStats: GameFieldingStatsTeam) {
     // Get the current season stats or create a new one if it doesn't exist
     const seasonStats = await prisma.teamSeasonFieldingStats.findUnique({
-        where: { teamId: teamId, seasonId: seasonId },
+        where: {
+            teamId_seasonId: {
+                teamId: teamId,
+                seasonId: seasonId,
+            },
+        },
     });
 
     if (!seasonStats) {
@@ -651,7 +676,12 @@ async function updateTeamSeasonFieldingStats(teamId: number, seasonId: number, g
     } else {
         // Update the existing season stats by adding the game stats
         await prisma.teamSeasonFieldingStats.update({
-            where: { teamId: teamId, seasonId: seasonId },
+            where: {
+                teamId_seasonId: {
+                    teamId: teamId,
+                    seasonId: seasonId,
+                },
+            },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + 1,
                 caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
@@ -703,7 +733,17 @@ async function updatePlayerStats(boxscore: Boxscore, game: GameDetails, existing
             const players = playersByTeam[teamKey].players;
             for (const playerId in players) {
                 const player = players[playerId];
-                await processPlayerStats(player.stats, existingGame, player.person.id);
+                // todo: get playerId from db as opposed to the mlb_api_id
+                const dbPlayer = await prisma.player.findUnique({
+                    where: { mlb_api_id: player.person.id },
+                });
+
+                if (!dbPlayer) {
+                    console.warn(`Player with ID ${player.person.id} not found in database.`);
+                    continue;
+                }
+
+                await processPlayerStats(player.stats, existingGame, dbPlayer.id);
             }
         }
     } catch (error) {
@@ -750,7 +790,12 @@ async function logPlayerGameBattingStats(playerId: number, gameId: number, gameS
 
 async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number, gameStats: GameBatting) {
     const seasonStats = await prisma.playerSeasonBattingStats.findUnique({
-        where: { playerId: playerId, seasonId: seasonId },
+        where: {
+            playerId_seasonId: {
+                playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                seasonId: seasonId,
+            },
+        },
     });
 
     if (!seasonStats) {
@@ -790,7 +835,12 @@ async function updatePlayerSeasonBattingStats(playerId: number, seasonId: number
         });
     } else {
         await prisma.playerSeasonBattingStats.update({
-            where: { playerId: playerId, seasonId: seasonId },
+            where: {
+                playerId_seasonId: {
+                    playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                    seasonId: seasonId,
+                },
+            },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + gameStats.gamesPlayed,
                 flyOuts: seasonStats.flyOuts + gameStats.flyOuts,
@@ -902,7 +952,12 @@ async function logPlayerGamePitchingStats(gameStats: GamePitching, gameId: numbe
 
 async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: number, gameStats: GamePitching) {
     const seasonStats = await prisma.playerSeasonPitchingStats.findUnique({
-        where: { playerId: playerId, seasonId: seasonId },
+        where: {
+            playerId_seasonId: {
+                playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                seasonId: seasonId,
+            },
+        },
     });
 
     if (!seasonStats) {
@@ -969,7 +1024,12 @@ async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: numbe
         });
     } else {
         await prisma.playerSeasonPitchingStats.update({
-            where: { playerId: playerId, seasonId: seasonId },
+            where: {
+                playerId_seasonId: {
+                    playerId: playerId, // TODO: MAKE SURE THIS IS THE RIGHT ID
+                    seasonId: seasonId,
+                },
+            },
             data: {
                 gamesPlayed: seasonStats.gamesPlayed + gameStats.gamesPlayed,
                 gamesStarted: seasonStats.gamesStarted + gameStats.gamesStarted,
@@ -1019,8 +1079,8 @@ async function updatePlayerSeasonPitchingStats(playerId: number, seasonId: numbe
                 popOuts: seasonStats.popOuts + gameStats.popOuts,
                 lineOuts: seasonStats.lineOuts + gameStats.lineOuts,
                 runningPitcherScore:
-                    seasonStats.runningPitcherScore?.toNumber() ??
-                    0 +
+                    seasonStats.runningPitcherScore ??
+                    0.0 +
                         (47.4 +
                             1.5 * gameStats.outs +
                             gameStats.strikeOuts -
