@@ -6,12 +6,39 @@ import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
 import { Player, Team } from "@prisma/client";
 import Link from "next/link";
+import { getEloPrediction } from "./services/getEloPrediction";
 
 type Game = {
     id: number;
     date: string;
-    homeTeam: Team;
-    awayTeam: Team;
+    homeTeam: Team & {
+        TeamRecord: Array<{
+            wins: number;
+            losses: number;
+            homeWins: number;
+            homeLosses: number;
+            awayWins: number;
+            awayLosses: number;
+        }>;
+        TeamELO: Array<{
+            elo: number;
+            eloChange: number;
+        }>;
+    };
+    awayTeam: Team & {
+        TeamRecord: Array<{
+            wins: number;
+            losses: number;
+            homeWins: number;
+            homeLosses: number;
+            awayWins: number;
+            awayLosses: number;
+        }>;
+        TeamELO: Array<{
+            elo: number;
+            eloChange: number;
+        }>;
+    };
     homeScore: number | null;
     awayScore: number | null;
     status: string;
@@ -55,6 +82,10 @@ export default function Home() {
             ) : (
                 <Grid container spacing={2}>
                     {games.map((game) => {
+                        const { winProbHome, winProbAway } = getEloPrediction({
+                            homeElo: game.homeTeam.TeamELO[0].elo,
+                            awayElo: game.awayTeam.TeamELO[0].elo,
+                        });
                         return (
                             <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
                                 <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
@@ -96,6 +127,12 @@ export default function Home() {
                                                     height={40}
                                                 />
                                                 <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
+                                                <Typography variant="body2" sx={{ ml: 1 }}>
+                                                    {game.awayTeam.TeamRecord[0].wins} -{" "}
+                                                    {game.awayTeam.TeamRecord[0].losses} (
+                                                    {game.awayTeam.TeamRecord[0].awayWins} -{" "}
+                                                    {game.awayTeam.TeamRecord[0].awayLosses})
+                                                </Typography>
                                             </Box>
                                             <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
                                         </Box>
@@ -117,6 +154,12 @@ export default function Home() {
                                                     height={40}
                                                 />
                                                 <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
+                                                <Typography variant="body2" sx={{ ml: 1 }}>
+                                                    {game.homeTeam.TeamRecord[0].wins} -{" "}
+                                                    {game.homeTeam.TeamRecord[0].losses} (
+                                                    {game.homeTeam.TeamRecord[0].homeWins} -{" "}
+                                                    {game.homeTeam.TeamRecord[0].homeLosses})
+                                                </Typography>
                                             </Box>
                                             <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
                                         </Box>
@@ -183,6 +226,20 @@ export default function Home() {
                                                     Home: {game.battingOrderHome.length > 0 ? "Lineup Set" : "TBD"}
                                                 </Typography>
                                             </Box>
+                                        </Box>
+                                        <Divider />
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="body2" align="center" sx={{ fontWeight: "bold" }}>
+                                                ELO Predictions:
+                                            </Typography>
+                                            <Typography variant="body2" align="left">
+                                                Away: {game.awayTeam.TeamELO[0].elo.toFixed(0)} (
+                                                {winProbAway.toFixed(1)}%)
+                                            </Typography>
+                                            <Typography variant="body2" align="left">
+                                                Home: {game.homeTeam.TeamELO[0].elo.toFixed(0)} (
+                                                {winProbHome.toFixed(1)}%)
+                                            </Typography>
                                         </Box>
                                     </Card>
                                 </Link>

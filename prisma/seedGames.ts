@@ -15,6 +15,11 @@ async function seedGames() {
             for (const game of dateEntry.games) {
                 const { gamePk, gameDate, teams, venue } = game;
 
+                // check if game is already in the database
+                const existingGame = await prisma.game.findUnique({
+                    where: { mlb_api_id: gamePk },
+                });
+
                 // Get mlb_api_ids
                 const homeTeamApiId = teams.home.team.id;
                 const awayTeamApiId = teams.away.team.id;
@@ -38,18 +43,32 @@ async function seedGames() {
                     continue;
                 }
 
-                // Insert game into the database
-                await prisma.game.create({
-                    data: {
-                        mlb_api_id: gamePk,
-                        season_id: 1,
-                        venue_id: venueRecord.id,
-                        date: new Date(gameDate),
-                        status: GameStatus.SCHEDULED,
-                        homeTeamId: homeTeam.id,
-                        awayTeamId: awayTeam.id,
-                    },
-                });
+                if (existingGame) {
+                    await prisma.game.update({
+                        where: { mlb_api_id: gamePk },
+                        data: {
+                            season_id: 1,
+                            venue_id: venueRecord.id,
+                            date: new Date(gameDate),
+                            status: GameStatus.SCHEDULED,
+                            homeTeamId: homeTeam.id,
+                            awayTeamId: awayTeam.id,
+                        },
+                    });
+                } else {
+                    // Insert game into the database
+                    await prisma.game.create({
+                        data: {
+                            mlb_api_id: gamePk,
+                            season_id: 1,
+                            venue_id: venueRecord.id,
+                            date: new Date(gameDate),
+                            status: GameStatus.SCHEDULED,
+                            homeTeamId: homeTeam.id,
+                            awayTeamId: awayTeam.id,
+                        },
+                    });
+                }
 
                 console.log(`Seeded game ${gamePk}`);
             }

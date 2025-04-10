@@ -8,12 +8,7 @@
         "start": "next start",
         "lint": "next lint",
         "generate": "prisma generate",
-        "set:probablePitchers": "ts-node prisma/setProbablePitchers.ts",
-        "log:game": "ts-node prisma/logGame.ts",
-        "seed:record": "ts-node prisma/seedTeamRecord.ts",
         "fetch:lineups": "ts-node cron/fetchLineupsAndPitchers.ts",
-        "log:results": "ts-node cron/getGameResults.ts",
-        "update:elo": "ts-node cron/updateElo.ts",
         "process:games": "ts-node cron/processGames.ts"
     },
     "dependencies": {

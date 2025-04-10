@@ -21,6 +21,22 @@ export async function GET(req: NextRequest) {
         const endOfDay = dayjs.tz(dateStr, "America/Denver").endOf("day").add(6, "hours").utc().toDate();
         // Adds 6 extra hours to include late-night games
 
+        // First, get the current season based on the date
+        const currentSeason = await prisma.season.findFirst({
+            where: {
+                startDate: {
+                    lte: startOfDay,
+                },
+                endDate: {
+                    gte: startOfDay,
+                },
+            },
+        });
+
+        if (!currentSeason) {
+            return NextResponse.json({ error: "No active season found for the given date" }, { status: 404 });
+        }
+
         const games = await prisma.game.findMany({
             where: {
                 date: {
@@ -29,8 +45,34 @@ export async function GET(req: NextRequest) {
                 },
             },
             include: {
-                homeTeam: true,
-                awayTeam: true,
+                homeTeam: {
+                    include: {
+                        TeamRecord: {
+                            where: {
+                                seasonId: currentSeason.id,
+                            },
+                        },
+                        TeamELO: {
+                            where: {
+                                seasonId: currentSeason.id,
+                            },
+                        },
+                    },
+                },
+                awayTeam: {
+                    include: {
+                        TeamRecord: {
+                            where: {
+                                seasonId: currentSeason.id,
+                            },
+                        },
+                        TeamELO: {
+                            where: {
+                                seasonId: currentSeason.id,
+                            },
+                        },
+                    },
+                },
                 // Join the Player table for starting pitchers
                 homeStartingPitcher: true, // Alias for home pitcher
                 awayStartingPitcher: true, // Alias for away pitcher

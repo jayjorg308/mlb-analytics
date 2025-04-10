@@ -27,6 +27,17 @@ async function seedPlayers() {
 
                 const { firstName, lastName } = splitName(person.fullName);
 
+                const existingPlayer = await prisma.player.findUnique({
+                    where: {
+                        mlb_api_id: person.id,
+                    },
+                });
+
+                if (existingPlayer) {
+                    console.log(`Player ${person.fullName} already exists. Skipping...`);
+                    continue;
+                }
+
                 // Insert player into the database
                 await prisma.player.create({
                     data: {

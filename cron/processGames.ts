@@ -17,9 +17,9 @@ import {
 const prisma = new PrismaClient();
 
 async function getGamesForDay(): Promise<GameDetails[]> {
-    //const today = new Date().toLocaleDateString();
+    const today = new Date().toLocaleDateString();
     const { data }: { data: ScheduleData } = await axios.get(
-        `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2025-04-09&endDate=2025-04-09&gameType=R`,
+        `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${today}&endDate=${today}&gameType=R`,
     );
 
     return data.dates.flatMap((date) => date.games);
@@ -262,7 +262,7 @@ async function updateTeamElo(
                 where: { teamId_seasonId: { teamId: elo.teamId, seasonId: elo.seasonId } },
                 data: {
                     elo: isHomeTeam ? eloData.newHomeElo : eloData.newAwayElo,
-                    eloChange: isHomeTeam ? eloData.eloChange : -eloData.eloChange,
+                    eloChange: isHomeTeam ? elo.eloChange + eloData.eloChange : elo.eloChange + -eloData.eloChange,
                 },
             });
         }
