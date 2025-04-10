@@ -18,6 +18,7 @@ const prisma = new PrismaClient();
 
 async function getGamesForDay(): Promise<GameDetails[]> {
     const today = new Date().toLocaleDateString();
+    console.log(`Fetching games for ${today}`);
     const { data }: { data: ScheduleData } = await axios.get(
         `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${today}&endDate=${today}&gameType=R`,
     );
@@ -28,15 +29,25 @@ async function getGamesForDay(): Promise<GameDetails[]> {
 async function getGameResults() {
     try {
         const games = await getGamesForDay();
-
+        console.log(`Found ${games.length} games for today.`);
         for (const game of games) {
             const existingGame = await prisma.game.findUnique({
                 where: { mlb_api_id: game.gamePk },
             });
-            if (!existingGame) continue;
+            if (!existingGame) {
+                console.log(`Game ${game.gamePk} not found in database.`);
+                continue;
+            }
 
-            if (existingGame.status === GameStatus.FINAL) continue;
-            if (game.status.statusCode !== "F") continue;
+            if (existingGame.status === GameStatus.FINAL) {
+                console.log(`Game ${game.gamePk} already processed.`);
+                continue;
+            }
+
+            if (game.status.statusCode !== "F") {
+                console.log(`Game ${game.gamePk} is not final yet. Has status ${game.status.statusCode}.`);
+                continue;
+            }
 
             try {
                 // Fetch game data outside of transaction
@@ -122,6 +133,7 @@ async function getGameResults() {
         console.error("Error updating game results:", error);
     } finally {
         await prisma.$disconnect();
+        console.log(`Completed getGameResults`);
     }
 }
 
