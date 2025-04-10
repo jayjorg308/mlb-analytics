@@ -13,12 +13,13 @@ import {
     GameBatting,
     GamePitching,
 } from "./interfaces";
+import { DateTime } from "luxon";
 
 const prisma = new PrismaClient();
 
 async function getGamesForDay(): Promise<GameDetails[]> {
-    const today = new Date().toLocaleDateString();
-    console.log(`Fetching games for ${today}`);
+    const today = DateTime.now().setZone("America/Denver").toFormat("yyyy-MM-dd");
+    console.log(`Fetching games for ${today} (MST)`);
     const { data }: { data: ScheduleData } = await axios.get(
         `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${today}&endDate=${today}&gameType=R`,
     );
