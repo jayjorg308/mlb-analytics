@@ -513,6 +513,7 @@ model TeamSeasonPitchingStats {
   passedBall             Int
   popOuts                Int
   lineOuts               Int
+  teamPitchingScore      Float?
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
@@ -554,17 +555,18 @@ model Injury {
 }
 
 model Venue {
-  id         Int     @id @default(autoincrement())
-  name       String  @db.VarChar(100)
-  mlb_api_id Int     @unique
-  latitude   Float
-  longitude  Float
-  address    String  @db.VarChar(255)
-  city       String  @db.VarChar(100)
-  state      String  @db.VarChar(100)
-  country    String  @db.VarChar(100)
-  isIndoor   Boolean @default(false)
-  games      Game[]
+  id                 Int     @id @default(autoincrement())
+  name               String  @db.VarChar(100)
+  mlb_api_id         Int     @unique
+  latitude           Float
+  longitude          Float
+  address            String  @db.VarChar(255)
+  city               String  @db.VarChar(100)
+  state              String  @db.VarChar(100)
+  country            String  @db.VarChar(100)
+  isIndoor           Boolean @default(false)
+  hasRetractableRoof Boolean @default(false)
+  games              Game[]
 }
 
 model Weather {

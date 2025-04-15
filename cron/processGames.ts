@@ -19,6 +19,7 @@ const prisma = new PrismaClient();
 
 async function getGamesForDay(): Promise<GameDetails[]> {
     const today = DateTime.now().setZone("America/Denver").toFormat("yyyy-MM-dd");
+    //const today = "2025-04-11";
     console.log(`Fetching games for ${today} (MST)`);
     const { data }: { data: ScheduleData } = await axios.get(
         `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${today}&endDate=${today}&gameType=R`,
@@ -45,7 +46,27 @@ async function getGameResults() {
                 continue;
             }
 
-            if (game.status.statusCode !== "F") {
+            // todo: look into automatically rescheduling games with status of "DR"
+            // are there any other statuses we should handle?
+
+            // todo: consider implementing pitcher elo bonus
+            // would require us to start tracking the team_pitching_score
+            // A pitcher’s Elo bonus is calculated with 4.7*(pitcher_score – team_pitching_score).
+
+            // todo: consider implementing travel and rest to elo game rating
+            // The travel adjustment is calculated as (-MILES_TRAVELED^(1/3))*0.31, and the rest adjustment is DAYS_REST*2.3.
+
+            // maybe implement icons that suggest a team has their ace pitching that day
+            // icons for "ace", "all-star", "good pitcher", "bad pitcher"
+            // icons for long travel or short rest
+
+            // at the end of game we need to update a team's season pitching stats to have their pitching score updated
+            // it should just include the starting pitcher's score
+
+            // on the main page, we should have more info about the pitcher for the game
+            // win-loss, whip, era, etc...
+
+            if (game.status.statusCode !== "F" && game.status.statusCode !== "FR") {
                 console.log(`Game ${game.gamePk} is not final yet. Has status ${game.status.statusCode}.`);
                 continue;
             }
@@ -1067,13 +1088,15 @@ async function logPlayerGamePitchingStats(
             popOuts: gameStats.popOuts,
             lineOuts: gameStats.lineOuts,
             pitchingScore:
-                47.4 +
-                1.5 * gameStats.outs +
-                gameStats.strikeOuts -
-                2 * gameStats.baseOnBalls -
-                2 * gameStats.hits -
-                3 * gameStats.runs -
-                4 * gameStats.homeRuns,
+                gameStats.gamesStarted === 1
+                    ? 47.4 +
+                      1.5 * gameStats.outs +
+                      gameStats.strikeOuts -
+                      2 * gameStats.baseOnBalls -
+                      2 * gameStats.hits -
+                      3 * gameStats.runs -
+                      4 * gameStats.homeRuns
+                    : null,
         },
     });
 }
@@ -1146,16 +1169,31 @@ async function updatePlayerSeasonPitchingStats(
                 popOuts: gameStats.popOuts,
                 lineOuts: gameStats.lineOuts,
                 runningPitcherScore:
-                    47.4 +
-                    1.5 * gameStats.outs +
-                    gameStats.strikeOuts -
-                    2 * gameStats.baseOnBalls -
-                    2 * gameStats.hits -
-                    3 * gameStats.runs -
-                    4 * gameStats.homeRuns,
+                    gameStats.gamesStarted === 1
+                        ? 47.4 +
+                          1.5 * gameStats.outs +
+                          gameStats.strikeOuts -
+                          2 * gameStats.baseOnBalls -
+                          2 * gameStats.hits -
+                          3 * gameStats.runs -
+                          4 * gameStats.homeRuns
+                        : 0,
             },
         });
     } else {
+        const pitchingScores = await tx.playerGamePitchingStats.findMany({
+            where: {
+                playerId: playerId,
+                gamesStarted: 1,
+            },
+            select: { pitchingScore: true },
+        });
+
+        const averagePitchingScore =
+            pitchingScores && pitchingScores.length > 0
+                ? pitchingScores.reduce((acc, stat) => acc + (stat.pitchingScore || 0), 0) / pitchingScores.length
+                : 0;
+
         await tx.playerSeasonPitchingStats.update({
             where: {
                 playerId_seasonId: {
@@ -1211,17 +1249,7 @@ async function updatePlayerSeasonPitchingStats(
                 passedBall: seasonStats.passedBall + gameStats.passedBall,
                 popOuts: seasonStats.popOuts + gameStats.popOuts,
                 lineOuts: seasonStats.lineOuts + gameStats.lineOuts,
-                runningPitcherScore:
-                    seasonStats.runningPitcherScore ??
-                    0.0 +
-                        (47.4 +
-                            1.5 * gameStats.outs +
-                            gameStats.strikeOuts -
-                            2 * gameStats.baseOnBalls -
-                            2 * gameStats.hits -
-                            3 * gameStats.runs -
-                            4 * gameStats.homeRuns) /
-                            (seasonStats.gamesPlayed + gameStats.gamesPlayed),
+                runningPitcherScore: averagePitchingScore,
             },
         });
     }
