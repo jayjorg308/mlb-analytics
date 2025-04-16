@@ -24,6 +24,9 @@ type Game = {
             elo: number;
             eloChange: number;
         }>;
+        TeamSeasonPitchingStats: Array<{
+            teamPitchingScore: number | null;
+        }>;
     };
     awayTeam: Team & {
         TeamRecord: Array<{
@@ -38,14 +41,52 @@ type Game = {
             elo: number;
             eloChange: number;
         }>;
+        TeamSeasonPitchingStats: Array<{
+            teamPitchingScore: number | null;
+        }>;
     };
     homeScore: number | null;
     awayScore: number | null;
     status: string;
-    homeStartingPitcher?: Player | null;
-    awayStartingPitcher?: Player | null;
+    homeStartingPitcher:
+        | (Player & {
+              PlayerSeasonPitchingStats: Array<{
+                  gamesPlayed: number;
+                  gamesStarted: number;
+                  wins: number;
+                  losses: number;
+                  earnedRuns: number;
+                  inningsPitched: number;
+                  runningPitcherScore: number;
+              }>;
+          })
+        | null;
+    awayStartingPitcher:
+        | (Player & {
+              PlayerSeasonPitchingStats: Array<{
+                  gamesPlayed: number;
+                  gamesStarted: number;
+                  wins: number;
+                  losses: number;
+                  earnedRuns: number;
+                  inningsPitched: number;
+                  runningPitcherScore: number;
+              }>;
+          })
+        | null;
     battingOrderHome: number[];
     battingOrderAway: number[];
+};
+
+const getERA = (earnedRuns: number, inningsPitched: number): string => {
+    if (inningsPitched === 0) {
+        return "-.--";
+    }
+
+    const wholeInnings = Math.floor(inningsPitched);
+    const decimalInnings = parseFloat((inningsPitched - wholeInnings).toFixed(1)) * 3.3;
+    const fixedInnings = wholeInnings + decimalInnings;
+    return ((9 * earnedRuns) / fixedInnings).toFixed(2);
 };
 
 export default function Home() {
@@ -85,6 +126,12 @@ export default function Home() {
                         const { winProbHome, winProbAway } = getEloPrediction({
                             homeElo: game.homeTeam.TeamELO[0].elo,
                             awayElo: game.awayTeam.TeamELO[0].elo,
+                            homePitcherAverageScore:
+                                game.homeStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                            homeTeamAveragePitchingScore: game.homeTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                            awayPitcherAverageScore:
+                                game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                            awayTeamAveragePitchingScore: game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
                         });
                         return (
                             <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
@@ -110,58 +157,70 @@ export default function Home() {
                                         <Divider />
 
                                         {/* Teams & Scores */}
-                                        <Box
-                                            sx={{
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                alignItems: "center",
-                                                py: 2,
-                                            }}
-                                        >
-                                            {/* Away Team */}
-                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                <Image
-                                                    src={game.awayTeam.logo_url.toLowerCase()}
-                                                    alt={game.awayTeam.abbreviation}
-                                                    width={40}
-                                                    height={40}
-                                                />
-                                                <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
-                                                <Typography variant="body2" sx={{ ml: 1 }}>
-                                                    {game.awayTeam.TeamRecord[0].wins} -{" "}
-                                                    {game.awayTeam.TeamRecord[0].losses} (
-                                                    {game.awayTeam.TeamRecord[0].awayWins} -{" "}
-                                                    {game.awayTeam.TeamRecord[0].awayLosses})
-                                                </Typography>
+                                        {/* Away Team */}
+                                        <Box py={2} display={"flex"} flexDirection={"column"}>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                    <Image
+                                                        src={game.awayTeam.logo_url.toLowerCase()}
+                                                        alt={game.awayTeam.abbreviation}
+                                                        width={40}
+                                                        height={40}
+                                                    />
+                                                    <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
+                                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                                        {game.awayTeam.TeamRecord[0].wins} -{" "}
+                                                        {game.awayTeam.TeamRecord[0].losses} (
+                                                        {game.awayTeam.TeamRecord[0].awayWins} -{" "}
+                                                        {game.awayTeam.TeamRecord[0].awayLosses})
+                                                    </Typography>
+                                                </Box>
+                                                <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
                                             </Box>
-                                            <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
+                                            <Typography variant="body2" align="left">
+                                                ELO: {game.awayTeam.TeamELO[0].elo.toFixed(0)}
+                                                {" | "}
+                                                Win Prob: {winProbAway.toFixed(1)}%
+                                            </Typography>
                                         </Box>
 
-                                        <Box
-                                            sx={{
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                alignItems: "center",
-                                                py: 2,
-                                            }}
-                                        >
-                                            {/* Home Team */}
-                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                <Image
-                                                    src={game.homeTeam.logo_url.toLowerCase()}
-                                                    alt={game.homeTeam.abbreviation}
-                                                    width={40}
-                                                    height={40}
-                                                />
-                                                <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
-                                                <Typography variant="body2" sx={{ ml: 1 }}>
-                                                    {game.homeTeam.TeamRecord[0].wins} -{" "}
-                                                    {game.homeTeam.TeamRecord[0].losses} (
-                                                    {game.homeTeam.TeamRecord[0].homeWins} -{" "}
-                                                    {game.homeTeam.TeamRecord[0].homeLosses})
-                                                </Typography>
+                                        {/* Home Team */}
+                                        <Box py={2} display={"flex"} flexDirection={"column"}>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                    <Image
+                                                        src={game.homeTeam.logo_url.toLowerCase()}
+                                                        alt={game.homeTeam.abbreviation}
+                                                        width={40}
+                                                        height={40}
+                                                    />
+                                                    <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
+                                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                                        {game.homeTeam.TeamRecord[0].wins} -{" "}
+                                                        {game.homeTeam.TeamRecord[0].losses} (
+                                                        {game.homeTeam.TeamRecord[0].homeWins} -{" "}
+                                                        {game.homeTeam.TeamRecord[0].homeLosses})
+                                                    </Typography>
+                                                </Box>
+                                                <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
                                             </Box>
-                                            <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
+                                            <Typography variant="body2" align="left">
+                                                ELO: {game.homeTeam.TeamELO[0].elo.toFixed(0)}
+                                                {" | "}
+                                                Win Prob: {winProbHome.toFixed(1)}%
+                                            </Typography>
                                         </Box>
 
                                         <Divider />
@@ -170,9 +229,10 @@ export default function Home() {
                                         <Box
                                             sx={{
                                                 display: "flex",
+                                                flexDirection: "column",
                                                 justifyContent: "space-between",
-                                                alignItems: "center",
                                                 mt: 2,
+                                                gap: 2,
                                             }}
                                         >
                                             {/* Away Pitcher */}
@@ -181,19 +241,46 @@ export default function Home() {
                                                     <Image
                                                         src={game.awayStartingPitcher.photoUrl}
                                                         alt={game.awayStartingPitcher.lastName}
-                                                        width={40}
-                                                        height={40}
+                                                        width={36}
+                                                        height={54}
                                                         style={{ borderRadius: "50%" }}
                                                     />
                                                 )}
-                                                <Typography variant="body2">
-                                                    {game.awayStartingPitcher
-                                                        ? `${game.awayStartingPitcher.firstName} ${game.awayStartingPitcher.lastName}`
-                                                        : "TBD"}
-                                                </Typography>
+                                                {game.awayStartingPitcher ? (
+                                                    <Box flexDirection={"column"}>
+                                                        <Typography variant="body2">
+                                                            {game.awayStartingPitcher.firstName}{" "}
+                                                            {game.awayStartingPitcher.lastName}
+                                                        </Typography>
+                                                        <Box display={"flex"} flexDirection={"row"} gap={1}>
+                                                            <Typography variant="body2">
+                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.wins ?? 0}{" "}
+                                                                -{" "}
+                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.losses ?? 0}{" "}
+                                                                (
+                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.gamesStarted ?? 0}{" "}
+                                                                GS)
+                                                            </Typography>
+                                                            {" | "}
+                                                            <Typography variant="body2">
+                                                                {getERA(
+                                                                    game.awayStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                                                    game.awayStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.inningsPitched ??
+                                                                        0,
+                                                                )}{" "}
+                                                                ERA
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="body2">TBD</Typography>
+                                                )}
                                             </Box>
-
-                                            <Typography variant="body2">vs.</Typography>
 
                                             {/* Home Pitcher */}
                                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -201,45 +288,46 @@ export default function Home() {
                                                     <Image
                                                         src={game.homeStartingPitcher.photoUrl}
                                                         alt={game.homeStartingPitcher.lastName}
-                                                        width={40}
-                                                        height={40}
+                                                        width={36}
+                                                        height={54}
                                                         style={{ borderRadius: "50%" }}
                                                     />
                                                 )}
-                                                <Typography variant="body2">
-                                                    {game.homeStartingPitcher
-                                                        ? `${game.homeStartingPitcher.firstName} ${game.homeStartingPitcher.lastName}`
-                                                        : "TBD"}
-                                                </Typography>
+                                                {game.homeStartingPitcher ? (
+                                                    <Box flexDirection={"column"}>
+                                                        <Typography variant="body2">
+                                                            {game.homeStartingPitcher.firstName}{" "}
+                                                            {game.homeStartingPitcher.lastName}
+                                                        </Typography>
+                                                        <Box display={"flex"} flexDirection={"row"} gap={1}>
+                                                            <Typography variant="body2">
+                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.wins ?? 0}{" "}
+                                                                -{" "}
+                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.losses ?? 0}{" "}
+                                                                (
+                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
+                                                                    ?.gamesStarted ?? 0}{" "}
+                                                                GS)
+                                                            </Typography>
+                                                            {" | "}
+                                                            <Typography variant="body2">
+                                                                {getERA(
+                                                                    game.homeStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                                                    game.homeStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.inningsPitched ??
+                                                                        0,
+                                                                )}{" "}
+                                                                ERA
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="body2">TBD</Typography>
+                                                )}
                                             </Box>
-                                        </Box>
-                                        <Divider />
-                                        <Box>
-                                            <Box sx={{ mt: 2 }}>
-                                                <Typography variant="body2" align="center" sx={{ fontWeight: "bold" }}>
-                                                    Batting Orders
-                                                </Typography>
-                                                <Typography variant="body2" align="left">
-                                                    Away: {game.battingOrderAway.length > 0 ? "Lineup Set" : "TBD"}
-                                                </Typography>
-                                                <Typography variant="body2" align="left">
-                                                    Home: {game.battingOrderHome.length > 0 ? "Lineup Set" : "TBD"}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <Divider />
-                                        <Box sx={{ mt: 2 }}>
-                                            <Typography variant="body2" align="center" sx={{ fontWeight: "bold" }}>
-                                                ELO Predictions:
-                                            </Typography>
-                                            <Typography variant="body2" align="left">
-                                                Away: {game.awayTeam.TeamELO[0].elo.toFixed(0)} (
-                                                {winProbAway.toFixed(1)}%)
-                                            </Typography>
-                                            <Typography variant="body2" align="left">
-                                                Home: {game.homeTeam.TeamELO[0].elo.toFixed(0)} (
-                                                {winProbHome.toFixed(1)}%)
-                                            </Typography>
                                         </Box>
                                     </Card>
                                 </Link>

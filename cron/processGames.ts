@@ -66,6 +66,8 @@ async function getGameResults() {
             // on the main page, we should have more info about the pitcher for the game
             // win-loss, whip, era, etc...
 
+            // todo: fix the way we're incrementing Innings Pitched. Shouldn't  be able to go over .2 in fractions. Should be .0, .1, or .2
+
             if (game.status.statusCode !== "F" && game.status.statusCode !== "FR") {
                 console.log(`Game ${game.gamePk} is not final yet. Has status ${game.status.statusCode}.`);
                 continue;

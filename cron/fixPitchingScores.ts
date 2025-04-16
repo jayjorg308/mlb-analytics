@@ -2,12 +2,10 @@ import { GameStatus, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// next get team average pitching score
+// todo: automate this after games are played
 
 async function fixPitchingScores() {
     try {
-        // for each team, loop through each game and get the pitching score for the starting pitcher
-        // then take an average of the pitching scores for each team
         const teams = await prisma.team.findMany({
             include: {
                 homeGames: {

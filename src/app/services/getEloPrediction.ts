@@ -1,6 +1,10 @@
 type EloInput = {
     homeElo: number;
     awayElo: number;
+    homePitcherAverageScore: number | null;
+    homeTeamAveragePitchingScore: number | null;
+    awayPitcherAverageScore: number | null;
+    awayTeamAveragePitchingScore: number | null;
     isPlayoff?: boolean;
     isNeutral?: boolean;
     homeFieldAdvantage?: number;
@@ -14,13 +18,31 @@ type EloPredictionResult = {
 export function getEloPrediction({
     homeElo,
     awayElo,
+    homePitcherAverageScore,
+    homeTeamAveragePitchingScore,
+    awayPitcherAverageScore,
+    awayTeamAveragePitchingScore,
     isPlayoff = false,
     isNeutral = false,
     homeFieldAdvantage = 24,
 }: EloInput): EloPredictionResult {
     // Adjust for home field
     const hfa = isNeutral ? 0 : homeFieldAdvantage;
-    let eloDiff = homeElo + hfa - awayElo;
+
+    // Adjust for pitcher performance
+    const awayPitcherAdjustment =
+        awayPitcherAverageScore && awayTeamAveragePitchingScore
+            ? 4.7 * (awayPitcherAverageScore - awayTeamAveragePitchingScore)
+            : 0;
+    const homePitcherAdjustment =
+        homePitcherAverageScore && homeTeamAveragePitchingScore
+            ? 4.7 * (homePitcherAverageScore - homeTeamAveragePitchingScore)
+            : 0;
+
+    //console.log("away pitcher adjustment", awayElo, awayPitcherAdjustment, awayElo + awayPitcherAdjustment);
+    //console.log("home pitcher adjustment", homeElo, homePitcherAdjustment, homeElo + homePitcherAdjustment + hfa);
+
+    let eloDiff = homeElo + homePitcherAdjustment + hfa - (awayElo + awayPitcherAdjustment);
 
     // Postseason multiplies eloDiff by 4/3
     if (isPlayoff) eloDiff *= 4 / 3;

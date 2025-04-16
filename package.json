@@ -10,7 +10,8 @@
         "generate": "prisma generate",
         "fetch:lineups": "ts-node cron/fetchLineupsAndPitchers.ts",
         "process:games": "ts-node cron/processGames.ts",
-        "fix:pitching": "ts-node cron/fixPitchingScores.ts"
+        "fix:pitching": "ts-node cron/fixPitchingScores.ts",
+        "fix:ip": "ts-node cron/fixIP.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",

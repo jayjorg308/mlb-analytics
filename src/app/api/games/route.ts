@@ -57,6 +57,11 @@ export async function GET(req: NextRequest) {
                                 seasonId: currentSeason.id,
                             },
                         },
+                        TeamSeasonPitchingStats: {
+                            select: {
+                                teamPitchingScore: true,
+                            },
+                        },
                     },
                 },
                 awayTeam: {
@@ -71,11 +76,44 @@ export async function GET(req: NextRequest) {
                                 seasonId: currentSeason.id,
                             },
                         },
+                        TeamSeasonPitchingStats: {
+                            select: {
+                                teamPitchingScore: true,
+                            },
+                        },
                     },
                 },
                 // Join the Player table for starting pitchers
-                homeStartingPitcher: true, // Alias for home pitcher
-                awayStartingPitcher: true, // Alias for away pitcher
+                homeStartingPitcher: {
+                    include: {
+                        PlayerSeasonPitchingStats: {
+                            select: {
+                                gamesPlayed: true,
+                                gamesStarted: true,
+                                wins: true,
+                                losses: true,
+                                earnedRuns: true,
+                                inningsPitched: true,
+                                runningPitcherScore: true,
+                            },
+                        },
+                    },
+                }, // Alias for home pitcher
+                awayStartingPitcher: {
+                    include: {
+                        PlayerSeasonPitchingStats: {
+                            select: {
+                                gamesPlayed: true,
+                                gamesStarted: true,
+                                wins: true,
+                                losses: true,
+                                earnedRuns: true,
+                                inningsPitched: true,
+                                runningPitcherScore: true,
+                            },
+                        },
+                    },
+                }, // Alias for away pitcher
             },
             orderBy: {
                 date: "asc",
