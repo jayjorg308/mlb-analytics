@@ -185,8 +185,9 @@ export default function Home() {
                                             </Box>
                                             <Typography variant="body2" align="left">
                                                 ELO: {game.awayTeam.TeamELO[0].elo.toFixed(0)}
-                                                {" | "}
-                                                Win Prob: {winProbAway.toFixed(1)}%
+                                                {game.status !== "FINAL"
+                                                    ? ` | Win Prob: ${winProbAway.toFixed(1)}%`
+                                                    : ""}
                                             </Typography>
                                         </Box>
 
@@ -218,8 +219,9 @@ export default function Home() {
                                             </Box>
                                             <Typography variant="body2" align="left">
                                                 ELO: {game.homeTeam.TeamELO[0].elo.toFixed(0)}
-                                                {" | "}
-                                                Win Prob: {winProbHome.toFixed(1)}%
+                                                {game.status !== "FINAL"
+                                                    ? ` | Win Prob: ${winProbHome.toFixed(1)}%`
+                                                    : ""}
                                             </Typography>
                                         </Box>
 
@@ -264,7 +266,7 @@ export default function Home() {
                                                                     ?.gamesStarted ?? 0}{" "}
                                                                 GS)
                                                             </Typography>
-                                                            {" | "}
+                                                            <Typography variant="body2">|</Typography>
                                                             <Typography variant="body2">
                                                                 {getERA(
                                                                     game.awayStartingPitcher

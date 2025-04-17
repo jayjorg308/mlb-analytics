@@ -39,10 +39,29 @@ export function getEloPrediction({
             ? 4.7 * (homePitcherAverageScore - homeTeamAveragePitchingScore)
             : 0;
 
-    //console.log("away pitcher adjustment", awayElo, awayPitcherAdjustment, awayElo + awayPitcherAdjustment);
-    //console.log("home pitcher adjustment", homeElo, homePitcherAdjustment, homeElo + homePitcherAdjustment + hfa);
+    // console.log("away pitcher adjustment", awayElo, awayPitcherAdjustment, awayElo + awayPitcherAdjustment);
+    // console.log("home pitcher adjustment", homeElo, homePitcherAdjustment, homeElo + homePitcherAdjustment + hfa);
+    // console.log(
+    //     "awayElo",
+    //     awayElo,
+    //     "awayPitcherAverageScore",
+    //     awayPitcherAverageScore,
+    //     "awayTeamAveragePitchingScore",
+    //     awayTeamAveragePitchingScore,
+    // );
+    // console.log(
+    //     "homeElo",
+    //     homeElo,
+    //     "homePitcherAverageScore",
+    //     homePitcherAverageScore,
+    //     "homeTeamAveragePitchingScore",
+    //     homeTeamAveragePitchingScore,
+    // );
 
+    //const eloDiffNoPitch = homeElo + hfa - awayElo;
     let eloDiff = homeElo + homePitcherAdjustment + hfa - (awayElo + awayPitcherAdjustment);
+
+    //console.log("eloDiffNoPitch", eloDiffNoPitch, "eloDiff", eloDiff);
 
     // Postseason multiplies eloDiff by 4/3
     if (isPlayoff) eloDiff *= 4 / 3;
