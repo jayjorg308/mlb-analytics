@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Box, Card, Typography, Divider, Grid } from "@mui/material";
+import { Box, Card, Typography, Divider, Grid, Button } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
 import Image from "next/image";
 import { Player, Team } from "@prisma/client";
 import Link from "next/link";
-import { getEloPrediction } from "./services/getEloPrediction";
+import { getEloPrediction, getPredictionForExport } from "./services/getEloPrediction";
 
 type Game = {
     id: number;
@@ -105,16 +105,80 @@ export default function Home() {
         fetchGames();
     }, [selectedDate]);
 
+    const exportSheet = async () => {
+        // Date
+        // Away Team, ELO, Avg Pitching Score, Team Avg Pitching Score, Pitcher ELO adjustment, ELO win prob, ELO win prob adjusted
+        // Home Team, ELO, Avg Pitching Score, Team Avg Pitching Score, Pitcher ELO adjustment, ELO win prob, ELO win prob adjusted
+        // ELO Diff, ELO Diff adjusted
+        const results = games.map((game) => {
+            const {
+                awayPitcherAdjustment,
+                awayWinProbNoPitcherAdjustment,
+                awayWinProbWithPitcherAdjustment,
+                homePitcherAdjustment,
+                homeWinProbNoPitcherAdjustment,
+                homeWinProbWithPitcherAdjustment,
+                eloDiffNoPitcherAdjustment,
+                eloDiffWithPitcherAdjustment,
+            } = getPredictionForExport({
+                homeElo: game.homeTeam.TeamELO[0].elo,
+                awayElo: game.awayTeam.TeamELO[0].elo,
+                homePitcherAverageScore:
+                    game.homeStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                homeTeamAveragePitchingScore: game.homeTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                awayPitcherAverageScore:
+                    game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                awayTeamAveragePitchingScore: game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+            });
+            return [
+                selectedDate.format("MM-DD-YYYY"),
+                game.awayTeam.abbreviation,
+                game.awayTeam.TeamELO[0].elo,
+                game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                awayPitcherAdjustment,
+                awayWinProbNoPitcherAdjustment,
+                awayWinProbWithPitcherAdjustment,
+                game.homeTeam.abbreviation,
+                game.homeTeam.TeamELO[0].elo,
+                game.homeStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                game.homeTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                homePitcherAdjustment,
+                homeWinProbNoPitcherAdjustment,
+                homeWinProbWithPitcherAdjustment,
+                eloDiffNoPitcherAdjustment,
+                eloDiffWithPitcherAdjustment,
+            ];
+        });
+
+        const csvContent = results
+            .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+            .join("\n");
+
+        // Create a Blob and trigger a download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = url;
+        downloadLink.setAttribute("download", `daily-export-${new Date().toISOString().split("T")[0]}.csv`);
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
+
     return (
         <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, p: 2 }}>
             {/* Calendar Date Picker */}
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3, gap: 2 }}>
                 <DatePicker
                     value={selectedDate}
                     onChange={(date) => date && setSelectedDate(date)}
                     minDate={firstGameDate}
                     maxDate={lastGameDate}
                 />
+                <Button variant="contained" onClick={exportSheet}>
+                    Export
+                </Button>
             </Box>
 
             {/* Game Cards */}
@@ -313,7 +377,7 @@ export default function Home() {
                                                                     ?.gamesStarted ?? 0}{" "}
                                                                 GS)
                                                             </Typography>
-                                                            {" | "}
+                                                            <Typography variant="body2">|</Typography>
                                                             <Typography variant="body2">
                                                                 {getERA(
                                                                     game.homeStartingPitcher
