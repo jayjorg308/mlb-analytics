@@ -37,9 +37,6 @@ export const MenuBar = () => {
                     <Button color="inherit" component={Link} href="/stats">
                         Stats
                     </Button>
-                    <Button color="inherit" component={Link} href="/teams">
-                        Teams
-                    </Button>
                 </Box>
 
                 {/* Mobile Dropdown (Visible on Small Screens) */}

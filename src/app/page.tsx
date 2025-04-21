@@ -57,6 +57,8 @@ type Game = {
                   losses: number;
                   earnedRuns: number;
                   inningsPitched: number;
+                  baseOnBalls: number;
+                  hits: number;
                   runningPitcherScore: number;
               }>;
           })
@@ -70,6 +72,8 @@ type Game = {
                   losses: number;
                   earnedRuns: number;
                   inningsPitched: number;
+                  baseOnBalls: number;
+                  hits: number;
                   runningPitcherScore: number;
               }>;
           })
@@ -78,15 +82,14 @@ type Game = {
     battingOrderAway: number[];
 };
 
-const getERA = (earnedRuns: number, inningsPitched: number): string => {
-    if (inningsPitched === 0) {
-        return "-.--";
-    }
-
+const getPitcherStats = (earnedRuns: number, walks: number, hits: number, inningsPitched: number) => {
+    if (inningsPitched === 0) return { era: "-.--", whip: "-.--" };
     const wholeInnings = Math.floor(inningsPitched);
     const decimalInnings = parseFloat((inningsPitched - wholeInnings).toFixed(1)) * 3.3;
     const fixedInnings = wholeInnings + decimalInnings;
-    return ((9 * earnedRuns) / fixedInnings).toFixed(2);
+    const era = ((9 * earnedRuns) / fixedInnings).toFixed(2);
+    const whip = ((walks + hits) / fixedInnings).toFixed(2);
+    return { era, whip };
 };
 
 export default function Home() {
@@ -197,6 +200,25 @@ export default function Home() {
                                 game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
                             awayTeamAveragePitchingScore: game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
                         });
+
+                        const awayPitcherStats = game.awayStartingPitcher
+                            ? getPitcherStats(
+                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
+                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
+                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                              )
+                            : null;
+
+                        const homePitcherStats = game.homeStartingPitcher
+                            ? getPitcherStats(
+                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
+                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
+                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                              )
+                            : null;
+
                         return (
                             <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
                                 <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
@@ -325,21 +347,14 @@ export default function Home() {
                                                                 -{" "}
                                                                 {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
                                                                     ?.losses ?? 0}{" "}
-                                                                (
-                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.gamesStarted ?? 0}{" "}
-                                                                GS)
                                                             </Typography>
                                                             <Typography variant="body2">|</Typography>
                                                             <Typography variant="body2">
-                                                                {getERA(
-                                                                    game.awayStartingPitcher
-                                                                        .PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
-                                                                    game.awayStartingPitcher
-                                                                        .PlayerSeasonPitchingStats[0]?.inningsPitched ??
-                                                                        0,
-                                                                )}{" "}
-                                                                ERA
+                                                                {awayPitcherStats?.era ?? "-.--"} ERA
+                                                            </Typography>
+                                                            <Typography variant="body2">|</Typography>
+                                                            <Typography variant="body2">
+                                                                {awayPitcherStats?.whip ?? "-.--"} WHIP
                                                             </Typography>
                                                         </Box>
                                                     </Box>
@@ -372,21 +387,14 @@ export default function Home() {
                                                                 -{" "}
                                                                 {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
                                                                     ?.losses ?? 0}{" "}
-                                                                (
-                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.gamesStarted ?? 0}{" "}
-                                                                GS)
                                                             </Typography>
                                                             <Typography variant="body2">|</Typography>
                                                             <Typography variant="body2">
-                                                                {getERA(
-                                                                    game.homeStartingPitcher
-                                                                        .PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
-                                                                    game.homeStartingPitcher
-                                                                        .PlayerSeasonPitchingStats[0]?.inningsPitched ??
-                                                                        0,
-                                                                )}{" "}
-                                                                ERA
+                                                                {homePitcherStats?.era ?? "-.--"} ERA
+                                                            </Typography>
+                                                            <Typography variant="body2">|</Typography>
+                                                            <Typography variant="body2">
+                                                                {homePitcherStats?.whip ?? "-.--"} WHIP
                                                             </Typography>
                                                         </Box>
                                                     </Box>
