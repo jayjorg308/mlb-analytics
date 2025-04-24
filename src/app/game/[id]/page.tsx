@@ -24,6 +24,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     const { homeStartingPitcher: homePitcher, awayStartingPitcher: awayPitcher } = game;
     const { battingOrderHome: homeLineup, battingOrderAway: awayLineup } = game;
 
+    // const homeRank = await getTeamRank("hits", "asc", game.homeTeam.id);
+    // const awayRank = await getTeamRank("hits", "asc", game.awayTeam.id);
+
     // Combine both home & away lineup ids to fetch all players in one query
     const allLineupIds = [...(homeLineup || []), ...(awayLineup || [])];
 

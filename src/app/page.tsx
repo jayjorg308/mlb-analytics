@@ -8,6 +8,7 @@ import { Player, Team } from "@prisma/client";
 import Link from "next/link";
 import { getEloPrediction, getPredictionForExport } from "./services/getEloPrediction";
 import { getPitcherStats } from "./shared/statCalcUtils";
+import BettingCardDialog from "./components/BettingCardDialog";
 
 type Game = {
     id: number;
@@ -88,6 +89,15 @@ export default function Home() {
     const lastGameDate = dayjs("2025-09-28");
     const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
     const [games, setGames] = useState<Game[]>([]);
+    const [isCardOpen, setIsCardOpen] = useState(false);
+
+    const handleCardOpen = () => {
+        setIsCardOpen(true);
+    };
+
+    const handleCardClose = () => {
+        setIsCardOpen(false);
+    };
 
     useEffect(() => {
         const fetchGames = async () => {
@@ -157,246 +167,263 @@ export default function Home() {
     };
 
     return (
-        <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, p: 2 }}>
-            {/* Calendar Date Picker */}
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3, gap: 2 }}>
-                <DatePicker
-                    value={selectedDate}
-                    onChange={(date) => date && setSelectedDate(date)}
-                    minDate={firstGameDate}
-                    maxDate={lastGameDate}
-                />
-                <Button variant="contained" onClick={exportSheet}>
-                    Export
-                </Button>
-            </Box>
+        <>
+            <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, p: 2 }}>
+                {/* Calendar Date Picker */}
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 3, gap: 2 }}>
+                    <DatePicker
+                        value={selectedDate}
+                        onChange={(date) => date && setSelectedDate(date)}
+                        minDate={firstGameDate}
+                        maxDate={lastGameDate}
+                    />
+                    <Button variant="outlined" onClick={exportSheet}>
+                        Export
+                    </Button>
 
-            {/* Game Cards */}
-            {games.length === 0 ? (
-                <Typography align="center">No games found for this date.</Typography>
-            ) : (
-                <Grid container spacing={2}>
-                    {games.map((game) => {
-                        const { winProbHome, winProbAway } = getEloPrediction({
-                            homeElo: game.homeTeam.TeamELO[0].elo,
-                            awayElo: game.awayTeam.TeamELO[0].elo,
-                            homePitcherAverageScore:
-                                game.homeStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
-                            homeTeamAveragePitchingScore: game.homeTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
-                            awayPitcherAverageScore:
-                                game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
-                            awayTeamAveragePitchingScore: game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
-                        });
+                    <Button variant="contained" onClick={handleCardOpen}>
+                        Today&apos;s Card
+                    </Button>
+                </Box>
 
-                        const awayPitcherStats = game.awayStartingPitcher
-                            ? getPitcherStats(
-                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
-                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
-                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
-                                  game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
-                              )
-                            : null;
+                {/* Game Cards */}
+                {games.length === 0 ? (
+                    <Typography align="center">No games found for this date.</Typography>
+                ) : (
+                    <Grid container spacing={2}>
+                        {games.map((game) => {
+                            const { winProbHome, winProbAway } = getEloPrediction({
+                                homeElo: game.homeTeam.TeamELO[0].elo,
+                                awayElo: game.awayTeam.TeamELO[0].elo,
+                                homePitcherAverageScore:
+                                    game.homeStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                                homeTeamAveragePitchingScore:
+                                    game.homeTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                                awayPitcherAverageScore:
+                                    game.awayStartingPitcher?.PlayerSeasonPitchingStats[0]?.runningPitcherScore ?? null,
+                                awayTeamAveragePitchingScore:
+                                    game.awayTeam.TeamSeasonPitchingStats[0].teamPitchingScore,
+                            });
 
-                        const homePitcherStats = game.homeStartingPitcher
-                            ? getPitcherStats(
-                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
-                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
-                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
-                                  game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
-                              )
-                            : null;
+                            const awayPitcherStats = game.awayStartingPitcher
+                                ? getPitcherStats(
+                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
+                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
+                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                                  )
+                                : null;
 
-                        return (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
-                                <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
-                                    <Card
-                                        sx={{
-                                            p: 2,
-                                            transition: "transform 0.2s ease-in-out",
-                                            "&:hover": { transform: "scale(1.05)" },
-                                            boxShadow: 3,
-                                        }}
-                                    >
-                                        {/* Game Time */}
-                                        <Typography variant="body2" align="center" sx={{ fontWeight: "bold", mb: 1 }}>
-                                            {game.status === "FINAL"
-                                                ? "Final"
-                                                : new Date(game.date).toLocaleTimeString([], {
-                                                      hour: "2-digit",
-                                                      minute: "2-digit",
-                                                  })}
-                                        </Typography>
+                            const homePitcherStats = game.homeStartingPitcher
+                                ? getPitcherStats(
+                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
+                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
+                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
+                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                                  )
+                                : null;
 
-                                        <Divider />
-
-                                        {/* Teams & Scores */}
-                                        {/* Away Team */}
-                                        <Box py={2} display={"flex"} flexDirection={"column"}>
-                                            <Box
-                                                sx={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                }}
-                                            >
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                    <Image
-                                                        src={game.awayTeam.logo_url.toLowerCase()}
-                                                        alt={game.awayTeam.abbreviation}
-                                                        width={40}
-                                                        height={40}
-                                                    />
-                                                    <Typography variant="h6">{game.awayTeam.abbreviation}</Typography>
-                                                    <Typography variant="body2" sx={{ ml: 1 }}>
-                                                        {game.awayTeam.TeamRecord[0].wins} -{" "}
-                                                        {game.awayTeam.TeamRecord[0].losses} (
-                                                        {game.awayTeam.TeamRecord[0].awayWins} -{" "}
-                                                        {game.awayTeam.TeamRecord[0].awayLosses})
-                                                    </Typography>
-                                                </Box>
-                                                <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
-                                            </Box>
-                                            <Typography variant="body2" align="left">
-                                                ELO: {game.awayTeam.TeamELO[0].elo.toFixed(0)}
-                                                {game.status !== "FINAL"
-                                                    ? ` | Win Prob: ${winProbAway.toFixed(1)}%`
-                                                    : ""}
-                                            </Typography>
-                                        </Box>
-
-                                        {/* Home Team */}
-                                        <Box py={2} display={"flex"} flexDirection={"column"}>
-                                            <Box
-                                                sx={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                }}
-                                            >
-                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                    <Image
-                                                        src={game.homeTeam.logo_url.toLowerCase()}
-                                                        alt={game.homeTeam.abbreviation}
-                                                        width={40}
-                                                        height={40}
-                                                    />
-                                                    <Typography variant="h6">{game.homeTeam.abbreviation}</Typography>
-                                                    <Typography variant="body2" sx={{ ml: 1 }}>
-                                                        {game.homeTeam.TeamRecord[0].wins} -{" "}
-                                                        {game.homeTeam.TeamRecord[0].losses} (
-                                                        {game.homeTeam.TeamRecord[0].homeWins} -{" "}
-                                                        {game.homeTeam.TeamRecord[0].homeLosses})
-                                                    </Typography>
-                                                </Box>
-                                                <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
-                                            </Box>
-                                            <Typography variant="body2" align="left">
-                                                ELO: {game.homeTeam.TeamELO[0].elo.toFixed(0)}
-                                                {game.status !== "FINAL"
-                                                    ? ` | Win Prob: ${winProbHome.toFixed(1)}%`
-                                                    : ""}
-                                            </Typography>
-                                        </Box>
-
-                                        <Divider />
-
-                                        {/* Pitcher Info */}
-                                        <Box
+                            return (
+                                <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
+                                    <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
+                                        <Card
                                             sx={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                justifyContent: "space-between",
-                                                mt: 2,
-                                                gap: 2,
+                                                p: 2,
+                                                transition: "transform 0.2s ease-in-out",
+                                                "&:hover": { transform: "scale(1.05)" },
+                                                boxShadow: 3,
                                             }}
                                         >
-                                            {/* Away Pitcher */}
-                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                {game.awayStartingPitcher?.photoUrl && (
-                                                    <Image
-                                                        src={game.awayStartingPitcher.photoUrl}
-                                                        alt={game.awayStartingPitcher.lastName}
-                                                        width={36}
-                                                        height={54}
-                                                        style={{ borderRadius: "50%" }}
-                                                    />
-                                                )}
-                                                {game.awayStartingPitcher ? (
-                                                    <Box flexDirection={"column"}>
-                                                        <Typography variant="body2">
-                                                            {game.awayStartingPitcher.firstName}{" "}
-                                                            {game.awayStartingPitcher.lastName}
+                                            {/* Game Time */}
+                                            <Typography
+                                                variant="body2"
+                                                align="center"
+                                                sx={{ fontWeight: "bold", mb: 1 }}
+                                            >
+                                                {game.status === "FINAL"
+                                                    ? "Final"
+                                                    : new Date(game.date).toLocaleTimeString([], {
+                                                          hour: "2-digit",
+                                                          minute: "2-digit",
+                                                      })}
+                                            </Typography>
+
+                                            <Divider />
+
+                                            {/* Teams & Scores */}
+                                            {/* Away Team */}
+                                            <Box py={2} display={"flex"} flexDirection={"column"}>
+                                                <Box
+                                                    sx={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "center",
+                                                    }}
+                                                >
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                        <Image
+                                                            src={game.awayTeam.logo_url.toLowerCase()}
+                                                            alt={game.awayTeam.abbreviation}
+                                                            width={40}
+                                                            height={40}
+                                                        />
+                                                        <Typography variant="h6">
+                                                            {game.awayTeam.abbreviation}
                                                         </Typography>
-                                                        <Box display={"flex"} flexDirection={"row"} gap={1}>
-                                                            <Typography variant="body2">
-                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.wins ?? 0}{" "}
-                                                                -{" "}
-                                                                {game.awayStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.losses ?? 0}{" "}
-                                                            </Typography>
-                                                            <Typography variant="body2">|</Typography>
-                                                            <Typography variant="body2">
-                                                                {awayPitcherStats?.era ?? "-.--"} ERA
-                                                            </Typography>
-                                                            <Typography variant="body2">|</Typography>
-                                                            <Typography variant="body2">
-                                                                {awayPitcherStats?.whip ?? "-.--"} WHIP
-                                                            </Typography>
-                                                        </Box>
+                                                        <Typography variant="body2" sx={{ ml: 1 }}>
+                                                            {game.awayTeam.TeamRecord[0].wins} -{" "}
+                                                            {game.awayTeam.TeamRecord[0].losses} (
+                                                            {game.awayTeam.TeamRecord[0].awayWins} -{" "}
+                                                            {game.awayTeam.TeamRecord[0].awayLosses})
+                                                        </Typography>
                                                     </Box>
-                                                ) : (
-                                                    <Typography variant="body2">TBD</Typography>
-                                                )}
+                                                    <Typography variant="h6">{game.awayScore ?? "-"}</Typography>
+                                                </Box>
+                                                <Typography variant="body2" align="left">
+                                                    ELO: {game.awayTeam.TeamELO[0].elo.toFixed(0)}
+                                                    {game.status !== "FINAL"
+                                                        ? ` | Win Prob: ${winProbAway.toFixed(1)}%`
+                                                        : ""}
+                                                </Typography>
                                             </Box>
 
-                                            {/* Home Pitcher */}
-                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                                {game.homeStartingPitcher?.photoUrl && (
-                                                    <Image
-                                                        src={game.homeStartingPitcher.photoUrl}
-                                                        alt={game.homeStartingPitcher.lastName}
-                                                        width={36}
-                                                        height={54}
-                                                        style={{ borderRadius: "50%" }}
-                                                    />
-                                                )}
-                                                {game.homeStartingPitcher ? (
-                                                    <Box flexDirection={"column"}>
-                                                        <Typography variant="body2">
-                                                            {game.homeStartingPitcher.firstName}{" "}
-                                                            {game.homeStartingPitcher.lastName}
+                                            {/* Home Team */}
+                                            <Box py={2} display={"flex"} flexDirection={"column"}>
+                                                <Box
+                                                    sx={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "center",
+                                                    }}
+                                                >
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                        <Image
+                                                            src={game.homeTeam.logo_url.toLowerCase()}
+                                                            alt={game.homeTeam.abbreviation}
+                                                            width={40}
+                                                            height={40}
+                                                        />
+                                                        <Typography variant="h6">
+                                                            {game.homeTeam.abbreviation}
                                                         </Typography>
-                                                        <Box display={"flex"} flexDirection={"row"} gap={1}>
-                                                            <Typography variant="body2">
-                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.wins ?? 0}{" "}
-                                                                -{" "}
-                                                                {game.homeStartingPitcher.PlayerSeasonPitchingStats[0]
-                                                                    ?.losses ?? 0}{" "}
-                                                            </Typography>
-                                                            <Typography variant="body2">|</Typography>
-                                                            <Typography variant="body2">
-                                                                {homePitcherStats?.era ?? "-.--"} ERA
-                                                            </Typography>
-                                                            <Typography variant="body2">|</Typography>
-                                                            <Typography variant="body2">
-                                                                {homePitcherStats?.whip ?? "-.--"} WHIP
-                                                            </Typography>
-                                                        </Box>
+                                                        <Typography variant="body2" sx={{ ml: 1 }}>
+                                                            {game.homeTeam.TeamRecord[0].wins} -{" "}
+                                                            {game.homeTeam.TeamRecord[0].losses} (
+                                                            {game.homeTeam.TeamRecord[0].homeWins} -{" "}
+                                                            {game.homeTeam.TeamRecord[0].homeLosses})
+                                                        </Typography>
                                                     </Box>
-                                                ) : (
-                                                    <Typography variant="body2">TBD</Typography>
-                                                )}
+                                                    <Typography variant="h6">{game.homeScore ?? "-"}</Typography>
+                                                </Box>
+                                                <Typography variant="body2" align="left">
+                                                    ELO: {game.homeTeam.TeamELO[0].elo.toFixed(0)}
+                                                    {game.status !== "FINAL"
+                                                        ? ` | Win Prob: ${winProbHome.toFixed(1)}%`
+                                                        : ""}
+                                                </Typography>
                                             </Box>
-                                        </Box>
-                                    </Card>
-                                </Link>
-                            </Grid>
-                        );
-                    })}
-                </Grid>
-            )}
-        </Box>
+
+                                            <Divider />
+
+                                            {/* Pitcher Info */}
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    justifyContent: "space-between",
+                                                    mt: 2,
+                                                    gap: 2,
+                                                }}
+                                            >
+                                                {/* Away Pitcher */}
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                    {game.awayStartingPitcher?.photoUrl && (
+                                                        <Image
+                                                            src={game.awayStartingPitcher.photoUrl}
+                                                            alt={game.awayStartingPitcher.lastName}
+                                                            width={36}
+                                                            height={54}
+                                                            style={{ borderRadius: "50%" }}
+                                                        />
+                                                    )}
+                                                    {game.awayStartingPitcher ? (
+                                                        <Box flexDirection={"column"}>
+                                                            <Typography variant="body2">
+                                                                {game.awayStartingPitcher.firstName}{" "}
+                                                                {game.awayStartingPitcher.lastName}
+                                                            </Typography>
+                                                            <Box display={"flex"} flexDirection={"row"} gap={1}>
+                                                                <Typography variant="body2">
+                                                                    {game.awayStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.wins ?? 0}{" "}
+                                                                    -{" "}
+                                                                    {game.awayStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.losses ?? 0}{" "}
+                                                                </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {awayPitcherStats?.era ?? "-.--"} ERA
+                                                                </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {awayPitcherStats?.whip ?? "-.--"} WHIP
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
+                                                    ) : (
+                                                        <Typography variant="body2">TBD</Typography>
+                                                    )}
+                                                </Box>
+
+                                                {/* Home Pitcher */}
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                    {game.homeStartingPitcher?.photoUrl && (
+                                                        <Image
+                                                            src={game.homeStartingPitcher.photoUrl}
+                                                            alt={game.homeStartingPitcher.lastName}
+                                                            width={36}
+                                                            height={54}
+                                                            style={{ borderRadius: "50%" }}
+                                                        />
+                                                    )}
+                                                    {game.homeStartingPitcher ? (
+                                                        <Box flexDirection={"column"}>
+                                                            <Typography variant="body2">
+                                                                {game.homeStartingPitcher.firstName}{" "}
+                                                                {game.homeStartingPitcher.lastName}
+                                                            </Typography>
+                                                            <Box display={"flex"} flexDirection={"row"} gap={1}>
+                                                                <Typography variant="body2">
+                                                                    {game.homeStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.wins ?? 0}{" "}
+                                                                    -{" "}
+                                                                    {game.homeStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.losses ?? 0}{" "}
+                                                                </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {homePitcherStats?.era ?? "-.--"} ERA
+                                                                </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {homePitcherStats?.whip ?? "-.--"} WHIP
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
+                                                    ) : (
+                                                        <Typography variant="body2">TBD</Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </Card>
+                                    </Link>
+                                </Grid>
+                            );
+                        })}
+                    </Grid>
+                )}
+            </Box>
+            <BettingCardDialog open={isCardOpen} handleClose={handleCardClose} />
+        </>
     );
 }

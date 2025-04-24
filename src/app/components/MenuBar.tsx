@@ -52,9 +52,6 @@ export const MenuBar = () => {
                     <MenuItem component={Link} href="/stats" onClick={handleMenuClose}>
                         Stats
                     </MenuItem>
-                    <MenuItem component={Link} href="/teams" onClick={handleMenuClose}>
-                        Teams
-                    </MenuItem>
                 </Menu>
             </Toolbar>
         </AppBar>

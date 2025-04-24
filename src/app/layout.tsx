@@ -7,6 +7,7 @@ import { Box, CssBaseline } from "@mui/material";
 import { MenuBar } from "./components/MenuBar";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+// import Footer from "./components/Footer";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <MenuBar />
                             <Box>{children}</Box>
+                            {/* <Footer /> */}
                         </LocalizationProvider>
                     </ThemeProvider>
                 </AppRouterCacheProvider>
