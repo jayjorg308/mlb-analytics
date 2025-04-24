@@ -1,132 +1,89 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import { getPitcherStats } from "@/app/shared/statCalcUtils";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        const { searchParams } = new URL(req.url);
-        const dateStr = searchParams.get("date"); // Expecting "YYYY-MM-DD"
-
-        if (!dateStr) {
-            return NextResponse.json({ error: "Date is required" }, { status: 400 });
-        }
-
-        // Convert the date string to the correct timezone (assuming UTC storage)
-        const startOfDay = dayjs.tz(dateStr, "America/Denver").startOf("day").utc().toDate();
-        const endOfDay = dayjs.tz(dateStr, "America/Denver").endOf("day").add(6, "hours").utc().toDate();
-        // Adds 6 extra hours to include late-night games
-
-        // First, get the current season based on the date
-        const currentSeason = await prisma.season.findFirst({
-            where: {
-                startDate: {
-                    lte: startOfDay,
+        const [pitchers, teams] = await Promise.all([
+            prisma.playerSeasonPitchingStats.findMany({
+                where: {
+                    seasonId: 1,
+                    gamesStarted: {
+                        gt: 0,
+                    },
                 },
-                endDate: {
-                    gte: startOfDay,
+                include: {
+                    player: {
+                        include: {
+                            team: true,
+                        },
+                    },
                 },
-            },
+            }),
+            prisma.teamSeasonPitchingStats.findMany({
+                where: {
+                    seasonId: 1,
+                },
+                include: {
+                    team: true,
+                },
+            }),
+        ]);
+
+        return NextResponse.json({
+            pitchers: pitchers.map((pitcher) => {
+                const { era, whip } = getPitcherStats(
+                    pitcher.earnedRuns || 0,
+                    pitcher.baseOnBalls || 0,
+                    pitcher.hits || 0,
+                    pitcher.inningsPitched || 0,
+                );
+                return {
+                    id: pitcher.playerId,
+                    name: `${pitcher.player.firstName} ${pitcher.player.lastName}`,
+                    team: pitcher.player.team?.abbreviation || "",
+                    wins: pitcher.wins || 0,
+                    losses: pitcher.losses || 0,
+                    era: era,
+                    gamesStarted: pitcher.gamesStarted || 0,
+                    inningsPitched: pitcher.inningsPitched.toFixed(1) || 0,
+                    hits: pitcher.hits || 0,
+                    runs: pitcher.runs || 0,
+                    earnedRuns: pitcher.earnedRuns || 0,
+                    hrsAllowed: pitcher.homeRuns || 0,
+                    battersFaced: pitcher.battersFaced || 0,
+                    whip: whip,
+                    strikeouts: pitcher.strikeOuts || 0,
+                    walks: pitcher.baseOnBalls || 0,
+                    score: pitcher.runningPitcherScore.toFixed(2),
+                };
+            }),
+            teams: teams.map((team) => {
+                const { era, whip } = getPitcherStats(
+                    team.earnedRuns || 0,
+                    team.baseOnBalls || 0,
+                    team.hits || 0,
+                    team.inningsPitched || 0,
+                );
+                return {
+                    id: team.teamId,
+                    name: `${team.team.city} ${team.team.name}`,
+                    era: era,
+                    gamesPlayed: team.gamesPlayed || 0,
+                    hits: team.hits || 0,
+                    runs: team.runs || 0,
+                    earnedRuns: team.earnedRuns || 0,
+                    hrsAllowed: team.homeRuns || 0,
+                    strikeouts: team.strikeOuts || 0,
+                    walks: team.baseOnBalls || 0,
+                    battersFaced: team.battersFaced || 0,
+                    whip: whip,
+                    score: team.teamPitchingScore?.toFixed(2) || 0,
+                };
+            }),
         });
-
-        if (!currentSeason) {
-            return NextResponse.json({ error: "No active season found for the given date" }, { status: 404 });
-        }
-
-        const games = await prisma.game.findMany({
-            where: {
-                date: {
-                    gte: startOfDay,
-                    lte: endOfDay,
-                },
-            },
-            include: {
-                homeTeam: {
-                    include: {
-                        TeamRecord: {
-                            where: {
-                                seasonId: currentSeason.id,
-                            },
-                        },
-                        TeamELO: {
-                            where: {
-                                seasonId: currentSeason.id,
-                            },
-                        },
-                        TeamSeasonPitchingStats: {
-                            select: {
-                                teamPitchingScore: true,
-                            },
-                        },
-                    },
-                },
-                awayTeam: {
-                    include: {
-                        TeamRecord: {
-                            where: {
-                                seasonId: currentSeason.id,
-                            },
-                        },
-                        TeamELO: {
-                            where: {
-                                seasonId: currentSeason.id,
-                            },
-                        },
-                        TeamSeasonPitchingStats: {
-                            select: {
-                                teamPitchingScore: true,
-                            },
-                        },
-                    },
-                },
-                // Join the Player table for starting pitchers
-                homeStartingPitcher: {
-                    include: {
-                        PlayerSeasonPitchingStats: {
-                            select: {
-                                gamesPlayed: true,
-                                gamesStarted: true,
-                                wins: true,
-                                losses: true,
-                                earnedRuns: true,
-                                inningsPitched: true,
-                                baseOnBalls: true,
-                                hits: true,
-                                runningPitcherScore: true,
-                            },
-                        },
-                    },
-                }, // Alias for home pitcher
-                awayStartingPitcher: {
-                    include: {
-                        PlayerSeasonPitchingStats: {
-                            select: {
-                                gamesPlayed: true,
-                                gamesStarted: true,
-                                wins: true,
-                                losses: true,
-                                earnedRuns: true,
-                                inningsPitched: true,
-                                baseOnBalls: true,
-                                hits: true,
-                                runningPitcherScore: true,
-                            },
-                        },
-                    },
-                }, // Alias for away pitcher
-            },
-            orderBy: {
-                date: "asc",
-            },
-        });
-
-        return NextResponse.json(games);
     } catch (error) {
-        console.error("Error fetching games:", error);
+        console.error("Error fetching stats:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

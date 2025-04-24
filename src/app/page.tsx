@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Player, Team } from "@prisma/client";
 import Link from "next/link";
 import { getEloPrediction, getPredictionForExport } from "./services/getEloPrediction";
+import { getPitcherStats } from "./shared/statCalcUtils";
 
 type Game = {
     id: number;
@@ -82,16 +83,6 @@ type Game = {
     battingOrderAway: number[];
 };
 
-const getPitcherStats = (earnedRuns: number, walks: number, hits: number, inningsPitched: number) => {
-    if (inningsPitched === 0) return { era: "-.--", whip: "-.--" };
-    const wholeInnings = Math.floor(inningsPitched);
-    const decimalInnings = parseFloat((inningsPitched - wholeInnings).toFixed(1)) * 3.3;
-    const fixedInnings = wholeInnings + decimalInnings;
-    const era = ((9 * earnedRuns) / fixedInnings).toFixed(2);
-    const whip = ((walks + hits) / fixedInnings).toFixed(2);
-    return { era, whip };
-};
-
 export default function Home() {
     const firstGameDate = dayjs("2025-03-18");
     const lastGameDate = dayjs("2025-09-28");
@@ -109,10 +100,6 @@ export default function Home() {
     }, [selectedDate]);
 
     const exportSheet = async () => {
-        // Date
-        // Away Team, ELO, Avg Pitching Score, Team Avg Pitching Score, Pitcher ELO adjustment, ELO win prob, ELO win prob adjusted
-        // Home Team, ELO, Avg Pitching Score, Team Avg Pitching Score, Pitcher ELO adjustment, ELO win prob, ELO win prob adjusted
-        // ELO Diff, ELO Diff adjusted
         const results = games.map((game) => {
             const {
                 awayPitcherAdjustment,
