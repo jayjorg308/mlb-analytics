@@ -10,10 +10,12 @@ export interface Date {
 export interface GameDetails {
     gamePk: number;
     status: Status;
+    rescheduleDate?: string;
 }
 
 export interface Status {
     statusCode: string;
+    codedGameState: string;
 }
 
 export interface GameData {

@@ -49,10 +49,6 @@ async function getGameResults() {
             // todo: look into automatically rescheduling games with status of "DR"
             // are there any other statuses we should handle?
 
-            // todo: consider implementing pitcher elo bonus
-            // would require us to start tracking the team_pitching_score
-            // A pitcher’s Elo bonus is calculated with 4.7*(pitcher_score – team_pitching_score).
-
             // todo: consider implementing travel and rest to elo game rating
             // The travel adjustment is calculated as (-MILES_TRAVELED^(1/3))*0.31, and the rest adjustment is DAYS_REST*2.3.
 
@@ -60,15 +56,24 @@ async function getGameResults() {
             // icons for "ace", "all-star", "good pitcher", "bad pitcher"
             // icons for long travel or short rest
 
-            // at the end of game we need to update a team's season pitching stats to have their pitching score updated
-            // it should just include the starting pitcher's score
+            // status.codedGameState === "D"
+            if (game.status.codedGameState === "D") {
+                // if (game.rescheduleDate !== undefined) {
+                //     await prisma
+                //         .$transaction(async (tx) => {
+                //             await updateDelayedGameDate(game, tx);
+                //         })
+                //         .catch((error) => {
+                //             console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
+                //         });
+                // }
 
-            // on the main page, we should have more info about the pitcher for the game
-            // win-loss, whip, era, etc...
+                console.log(`Game ${game.gamePk} is delayed until ${game.rescheduleDate}. Skipping update.`);
+                continue;
+            }
 
-            // todo: fix the way we're incrementing Innings Pitched. Shouldn't  be able to go over .2 in fractions. Should be .0, .1, or .2
-
-            if (game.status.statusCode !== "F" && game.status.statusCode !== "FR") {
+            // status.codedGameState === "F"
+            if (game.status.codedGameState !== "F") {
                 console.log(`Game ${game.gamePk} is not final yet. Has status ${game.status.statusCode}.`);
                 continue;
             }
@@ -172,7 +177,7 @@ async function updateFinalScoreAndStatus(
         await tx.game.update({
             where: { mlb_api_id: game.gamePk },
             data: {
-                status: game.status.statusCode === "F" ? GameStatus.FINAL : GameStatus.SCHEDULED,
+                status: game.status.codedGameState === "F" ? GameStatus.FINAL : GameStatus.SCHEDULED,
                 homeScore: homeTeamRuns,
                 awayScore: awayTeamRuns,
                 winningTeamId: winningTeamId,
@@ -184,6 +189,33 @@ async function updateFinalScoreAndStatus(
         console.error(`Error updating final score and status for game ${game.gamePk}:`, error);
     }
 }
+
+// async function updateDelayedGameDate(game: GameDetails, tx: Prisma.TransactionClient) {
+//     try {
+//         if (!game.rescheduleDate) {
+//             console.error(`Game ${game.gamePk} has no reschedule date.`);
+//             return;
+//         }
+
+//         const existingGame = await tx.game.findUnique({
+//             where: { mlb_api_id: game.gamePk },
+//         });
+
+//         if (!existingGame) {
+//             console.error(`Game ${game.gamePk} not found in database.`);
+//             return;
+//         }
+
+//         if (existingGame.date.toString() === game.rescheduleDate) {
+//             console.log(`Game ${game.gamePk} already has the correct reschedule date.`);
+//             return;
+//         }
+
+//         console.log(existingGame.date.toString(), game.rescheduleDate);
+//     } catch (error) {
+//         console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
+//     }
+// }
 
 async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: number, tx: Prisma.TransactionClient) {
     try {

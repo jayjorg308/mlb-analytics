@@ -37,6 +37,9 @@ export const MenuBar = () => {
                     <Button color="inherit" component={Link} href="/stats">
                         Stats
                     </Button>
+                    <Button color="inherit" component={Link} href="/standings">
+                        Standings
+                    </Button>
                 </Box>
 
                 {/* Mobile Dropdown (Visible on Small Screens) */}
@@ -51,6 +54,9 @@ export const MenuBar = () => {
                 >
                     <MenuItem component={Link} href="/stats" onClick={handleMenuClose}>
                         Stats
+                    </MenuItem>
+                    <MenuItem component={Link} href="/standings" onClick={handleMenuClose}>
+                        Standings
                     </MenuItem>
                 </Menu>
             </Toolbar>
