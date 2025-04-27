@@ -19,7 +19,7 @@ const prisma = new PrismaClient();
 
 async function getGamesForDay(): Promise<GameDetails[]> {
     const today = DateTime.now().setZone("America/Denver").toFormat("yyyy-MM-dd");
-    //const today = "2025-04-11";
+    //const today = "2025-04-26";
     console.log(`Fetching games for ${today} (MST)`);
     const { data }: { data: ScheduleData } = await axios.get(
         `https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${today}&endDate=${today}&gameType=R`,
@@ -46,9 +46,6 @@ async function getGameResults() {
                 continue;
             }
 
-            // todo: look into automatically rescheduling games with status of "DR"
-            // are there any other statuses we should handle?
-
             // todo: consider implementing travel and rest to elo game rating
             // The travel adjustment is calculated as (-MILES_TRAVELED^(1/3))*0.31, and the rest adjustment is DAYS_REST*2.3.
 
@@ -56,23 +53,21 @@ async function getGameResults() {
             // icons for "ace", "all-star", "good pitcher", "bad pitcher"
             // icons for long travel or short rest
 
-            // status.codedGameState === "D"
             if (game.status.codedGameState === "D") {
-                // if (game.rescheduleDate !== undefined) {
-                //     await prisma
-                //         .$transaction(async (tx) => {
-                //             await updateDelayedGameDate(game, tx);
-                //         })
-                //         .catch((error) => {
-                //             console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
-                //         });
-                // }
+                if (game.rescheduleDate !== undefined) {
+                    await prisma
+                        .$transaction(async (tx) => {
+                            await updateDelayedGameDate(game, tx);
+                        })
+                        .catch((error) => {
+                            console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
+                        });
+                }
 
                 console.log(`Game ${game.gamePk} is delayed until ${game.rescheduleDate}. Skipping update.`);
                 continue;
             }
 
-            // status.codedGameState === "F"
             if (game.status.codedGameState !== "F") {
                 console.log(`Game ${game.gamePk} is not final yet. Has status ${game.status.statusCode}.`);
                 continue;
@@ -190,32 +185,43 @@ async function updateFinalScoreAndStatus(
     }
 }
 
-// async function updateDelayedGameDate(game: GameDetails, tx: Prisma.TransactionClient) {
-//     try {
-//         if (!game.rescheduleDate) {
-//             console.error(`Game ${game.gamePk} has no reschedule date.`);
-//             return;
-//         }
+async function updateDelayedGameDate(game: GameDetails, tx: Prisma.TransactionClient) {
+    try {
+        if (!game.rescheduleDate) {
+            console.error(`Game ${game.gamePk} has no reschedule date.`);
+            return;
+        }
 
-//         const existingGame = await tx.game.findUnique({
-//             where: { mlb_api_id: game.gamePk },
-//         });
+        const existingGame = await tx.game.findUnique({
+            where: { mlb_api_id: game.gamePk },
+        });
 
-//         if (!existingGame) {
-//             console.error(`Game ${game.gamePk} not found in database.`);
-//             return;
-//         }
+        if (!existingGame) {
+            console.error(`Game ${game.gamePk} not found in database.`);
+            return;
+        }
 
-//         if (existingGame.date.toString() === game.rescheduleDate) {
-//             console.log(`Game ${game.gamePk} already has the correct reschedule date.`);
-//             return;
-//         }
+        const rescheduleDate = new Date(game.rescheduleDate);
+        console.log(existingGame.date.getTime(), rescheduleDate.getTime());
 
-//         console.log(existingGame.date.toString(), game.rescheduleDate);
-//     } catch (error) {
-//         console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
-//     }
-// }
+        if (existingGame.date.getTime() === rescheduleDate.getTime()) {
+            console.log(`Game ${game.gamePk} already has the correct reschedule date.`);
+            return;
+        }
+
+        // Update the game date if different
+        await tx.game.update({
+            where: { id: existingGame.id },
+            data: {
+                date: rescheduleDate,
+            },
+        });
+
+        console.log(`Updated game ${game.gamePk} reschedule date to ${rescheduleDate}`);
+    } catch (error) {
+        console.error(`Error updating delayed game date for game ${game.gamePk}:`, error);
+    }
+}
 
 async function insertInningDetails(innings: Inning[], dbGameId: number, gamePk: number, tx: Prisma.TransactionClient) {
     try {
