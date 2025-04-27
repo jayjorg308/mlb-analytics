@@ -65,6 +65,7 @@ model Team {
 model Game {
   id                    Int        @id @default(autoincrement())
   mlb_api_id            Int?       @unique
+  espn_api_id           Int?       @unique
   season_id             Int
   venue_id              Int?
   venue                 Venue?     @relation(fields: [venue_id], references: [id])
@@ -94,6 +95,7 @@ model Game {
   TeamGameBattingStats    TeamGameBattingStats[]
   TeamGamePitchingStats   TeamGamePitchingStats[]
   TeamGameFieldingStats   TeamGameFieldingStats[]
+  GameOdds                GameOdds?
 
   @@index(date)
   @@index(homeTeamId)
@@ -624,4 +626,22 @@ model TeamELO {
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
+}
+
+model GameOdds {
+  id             Int    @id @default(autoincrement())
+  gameId         Int    @unique
+  homeMoneyline  String
+  awayMoneyline  String
+  runTotal       Float
+  overOdds       Float
+  underOdds      Float
+  homeSpread     Float
+  awaySpread     Float
+  homeSpreadOdds Float
+  awaySpreadOdds Float
+
+  game      Game     @relation(fields: [gameId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
