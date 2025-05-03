@@ -1,8 +1,11 @@
 "use client";
 
-import { Box, Paper, Tabs, Tab } from "@mui/material";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, Paper, Tabs, Tab, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface PitcherStats {
     id: number;
@@ -22,6 +25,19 @@ interface PitcherStats {
     battersFaced: number;
     whip: number;
     score: number;
+}
+
+interface PitchingScoreStats {
+    highestScore: string;
+    highestScorePitcher: string;
+    highestScoreGameDate: string;
+    highestScoreGameId: string;
+    lowestScore: string;
+    lowestScorePitcher: string;
+    lowestScoreGameDate: string;
+    lowestScoreGameId: string;
+    averageScore: string;
+    totalPitchingScores: number;
 }
 
 interface TeamStats {
@@ -93,6 +109,7 @@ const teamColumns: GridColDef[] = [
 export default function StatsPage() {
     const [tabValue, setTabValue] = useState(0);
     const [pitcherStats, setPitcherStats] = useState<PitcherStats[]>([]);
+    const [pitchingScoreStats, setPitchingScoreStats] = useState<PitchingScoreStats | null>(null);
     const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -102,6 +119,7 @@ export default function StatsPage() {
                 const response = await fetch("/api/stats");
                 const data = await response.json();
                 setPitcherStats(data.pitchers || []);
+                setPitchingScoreStats(data.pitchingScoreStats || null);
                 setTeamStats(data.teams || []);
             } catch (error) {
                 console.error("Error fetching stats:", error);
@@ -171,6 +189,37 @@ export default function StatsPage() {
                     />
                 )}
             </Paper>
+            <Accordion>
+                <AccordionSummary
+                    expandIcon={<FontAwesomeIcon icon={faChevronDown} />}
+                    aria-controls="panel1-content"
+                    id="panel1-header"
+                >
+                    <Typography component="span">Season Pitching Facts</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Typography variant="body2" mb={1}>
+                        <strong>Average pitching score:</strong> {pitchingScoreStats?.averageScore || 0}
+                    </Typography>
+                    <Typography variant="body2" mb={1}>
+                        <strong>Highest pitching score (single game):</strong>&nbsp;{" "}
+                        {pitchingScoreStats?.highestScorePitcher}&nbsp;{" "}
+                        <Link target="_blank" href={`/game/${pitchingScoreStats?.highestScoreGameId}`}>
+                            {pitchingScoreStats?.highestScore || 0}
+                        </Link>
+                    </Typography>
+                    <Typography variant="body2" mb={1}>
+                        <strong>Lowest pitching score (single game):</strong>&nbsp;{" "}
+                        {pitchingScoreStats?.lowestScorePitcher}&nbsp;{" "}
+                        <Link target="_blank" href={`/game/${pitchingScoreStats?.lowestScoreGameId}`}>
+                            {pitchingScoreStats?.lowestScore || 0}
+                        </Link>
+                    </Typography>
+                    <Typography variant="body2" mb={1}>
+                        <strong>Pitching starts:</strong> {pitchingScoreStats?.totalPitchingScores || 0}
+                    </Typography>
+                </AccordionDetails>
+            </Accordion>
         </Box>
     );
 }
