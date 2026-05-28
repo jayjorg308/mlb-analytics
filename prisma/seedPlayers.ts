@@ -47,7 +47,7 @@ async function seedPlayers() {
                         position: position.abbreviation,
                         uniformNumber: parseInt(jerseyNumber as string),
                         teamId: team.id,
-                        photoUrl: `https://media.gamblersanonymo.us/mlb/players/${person.id}.jpg`,
+                        photoUrl: ``,
                     },
                 });
 

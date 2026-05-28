@@ -100,7 +100,7 @@ const checkRosters = async (awayTeamId: number, homeTeamId: number) => {
                     position: player.position.abbreviation,
                     uniformNumber: parseInt(player.jerseyNumber as string),
                     teamId: teamIdMap[player.parentTeamId] || null, // Ensure teamId is resolved
-                    photoUrl: `https://media.gamblersanonymo.us/mlb/players/${player.person.id}.jpg`,
+                    photoUrl: ``,
                 })),
                 skipDuplicates: true,
             });

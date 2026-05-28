@@ -7,130 +7,104 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMS
-enum GameStatus {
-  SCHEDULED
-  IN_PROGRESS
-  FINAL
-  POSTPONED
-}
-
-enum PitcherDecision {
-  WIN
-  LOSS
-  SAVE
-  HOLD
-  NO_DECISION
-}
-
-// MODELS
 model Season {
   id                        Int                         @id @default(autoincrement())
-  year                      Int
+  year                      Int                         @unique
   startDate                 DateTime
   endDate                   DateTime
-  TeamRecord                TeamRecord[]
-  TeamELO                   TeamELO[]
   PlayerSeasonBattingStats  PlayerSeasonBattingStats[]
-  TeamSeasonBattingStats    TeamSeasonBattingStats[]
-  TeamSeasonPitchingStats   TeamSeasonPitchingStats[]
-  TeamSeasonFieldingStats   TeamSeasonFieldingStats[]
   PlayerSeasonPitchingStats PlayerSeasonPitchingStats[]
-
-  @@unique([year])
+  TeamELO                   TeamELO[]
+  TeamRecord                TeamRecord[]
+  TeamSeasonBattingStats    TeamSeasonBattingStats[]
+  TeamSeasonFieldingStats   TeamSeasonFieldingStats[]
+  TeamSeasonPitchingStats   TeamSeasonPitchingStats[]
 }
 
 model Team {
-  id           Int    @id @default(autoincrement())
-  mlb_api_id   Int    @unique
-  venue_id     Int?
-  city         String @db.VarChar(100)
-  name         String @db.VarChar(100)
-  abbreviation String @unique
-  logo_url     String @db.VarChar(255)
-
-  homeGames               Game[]                    @relation("HomeTeam")
+  id                      Int                       @id @default(autoincrement())
+  mlb_api_id              Int                       @unique
+  venue_id                Int?
+  city                    String                    @db.VarChar(100)
+  name                    String                    @db.VarChar(100)
+  abbreviation            String                    @unique
+  logo_url                String                    @db.VarChar(255)
   awayGames               Game[]                    @relation("AwayTeam")
+  homeGames               Game[]                    @relation("HomeTeam")
   players                 Player[]
-  TeamGameBattingStats    TeamGameBattingStats[]
-  TeamGamePitchingStats   TeamGamePitchingStats[]
-  TeamSeasonBattingStats  TeamSeasonBattingStats[]
-  TeamSeasonPitchingStats TeamSeasonPitchingStats[]
-  TeamRecord              TeamRecord[]
   TeamELO                 TeamELO[]
+  TeamGameBattingStats    TeamGameBattingStats[]
   TeamGameFieldingStats   TeamGameFieldingStats[]
+  TeamGamePitchingStats   TeamGamePitchingStats[]
+  TeamRecord              TeamRecord[]
+  TeamSeasonBattingStats  TeamSeasonBattingStats[]
   TeamSeasonFieldingStats TeamSeasonFieldingStats[]
+  TeamSeasonPitchingStats TeamSeasonPitchingStats[]
 }
 
 model Game {
-  id                    Int        @id @default(autoincrement())
-  mlb_api_id            Int?       @unique
-  espn_api_id           Int?       @unique
-  season_id             Int
-  venue_id              Int?
-  venue                 Venue?     @relation(fields: [venue_id], references: [id])
-  date                  DateTime
-  status                GameStatus
-  isPostseason          Boolean    @default(false)
-  isNeutralSite         Boolean    @default(false)
-  homeTeamId            Int
-  awayTeamId            Int
-  homeTeam              Team       @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam              Team       @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  homeScore             Int?
-  awayScore             Int?
-  winningTeamId         Int?
-  startingPitcherHomeId Int?
-  startingPitcherAwayId Int?
-  homeStartingPitcher   Player?    @relation("HomePitcher", fields: [startingPitcherHomeId], references: [id])
-  awayStartingPitcher   Player?    @relation("AwayPitcher", fields: [startingPitcherAwayId], references: [id])
-  // Lineups
-  battingOrderHome      Int[] // Array of player IDs or names
-  battingOrderAway      Int[]
-
-  Weather                 Weather?
+  id                      Int                       @id @default(autoincrement())
+  mlb_api_id              Int?                      @unique
+  season_id               Int
+  venue_id                Int?
+  date                    DateTime
+  status                  GameStatus
+  homeTeamId              Int
+  awayTeamId              Int
+  homeScore               Int?
+  awayScore               Int?
+  winningTeamId           Int?
+  startingPitcherHomeId   Int?
+  startingPitcherAwayId   Int?
+  battingOrderHome        Int[]
+  battingOrderAway        Int[]
+  isNeutralSite           Boolean                   @default(false)
+  isPostseason            Boolean                   @default(false)
+  espn_api_id             Int?                      @unique
+  awayTeam                Team                      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam                Team                      @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayStartingPitcher     Player?                   @relation("AwayPitcher", fields: [startingPitcherAwayId], references: [id])
+  homeStartingPitcher     Player?                   @relation("HomePitcher", fields: [startingPitcherHomeId], references: [id])
+  venue                   Venue?                    @relation(fields: [venue_id], references: [id])
+  GameOdds                GameOdds?
+  InningDetails           InningDetails[]
   PlayerGameBattingStats  PlayerGameBattingStats[]
   PlayerGamePitchingStats PlayerGamePitchingStats[]
-  InningDetails           InningDetails[]
   TeamGameBattingStats    TeamGameBattingStats[]
-  TeamGamePitchingStats   TeamGamePitchingStats[]
   TeamGameFieldingStats   TeamGameFieldingStats[]
-  GameOdds                GameOdds?
+  TeamGamePitchingStats   TeamGamePitchingStats[]
+  Weather                 Weather?
 
-  @@index(date)
-  @@index(homeTeamId)
-  @@index(awayTeamId)
-  @@index([season_id, date]) // Faster queries for games in a season, sorted by date
+  @@index([date])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([season_id, date])
 }
 
 model Player {
-  id            Int    @id @default(autoincrement())
-  mlb_api_id    Int?   @unique
-  firstName     String @db.VarChar(100)
-  lastName      String @db.VarChar(100)
-  position      String @db.VarChar(100) // e.g., "Pitcher", "Catcher", "First Base", etc.
-  uniformNumber Int?
-  photoUrl      String @db.VarChar(255)
-  teamId        Int?
-
-  team                      Team?                       @relation(fields: [teamId], references: [id])
+  id                        Int                         @id @default(autoincrement())
+  mlb_api_id                Int?                        @unique
+  firstName                 String                      @db.VarChar(100)
+  lastName                  String                      @db.VarChar(100)
+  position                  String                      @db.VarChar(100)
+  uniformNumber             Int?
+  photoUrl                  String                      @db.VarChar(255)
+  teamId                    Int?
+  awayGamesPitched          Game[]                      @relation("AwayPitcher")
+  homeGamesPitched          Game[]                      @relation("HomePitcher")
   Injury                    Injury[]
+  team                      Team?                       @relation(fields: [teamId], references: [id])
   PlayerGameBattingStats    PlayerGameBattingStats[]
   PlayerGamePitchingStats   PlayerGamePitchingStats[]
   PlayerSeasonBattingStats  PlayerSeasonBattingStats[]
   PlayerSeasonPitchingStats PlayerSeasonPitchingStats[]
-  homeGamesPitched          Game[]                      @relation("HomePitcher")
-  awayGamesPitched          Game[]                      @relation("AwayPitcher")
 
   @@index([teamId, lastName])
 }
 
 model PlayerGameBattingStats {
-  playerId Int
-  gameId   Int
-  player   Player @relation(fields: [playerId], references: [id])
-  game     Game   @relation(fields: [gameId], references: [id])
-
+  playerId             Int
+  gameId               Int
   summary              String
   flyOuts              Int
   groundOuts           Int
@@ -159,17 +133,16 @@ model PlayerGameBattingStats {
   pickoffs             Int
   popOuts              Int
   lineOuts             Int
+  game                 Game   @relation(fields: [gameId], references: [id])
+  player               Player @relation(fields: [playerId], references: [id])
 
   @@id([playerId, gameId])
   @@index([playerId, gameId])
 }
 
 model PlayerGamePitchingStats {
-  playerId Int
-  gameId   Int
-  player   Player @relation(fields: [playerId], references: [id])
-  game     Game   @relation(fields: [gameId], references: [id])
-
+  playerId               Int
+  gameId                 Int
   decision               PitcherDecision?
   summary                String
   gamesPlayed            Int
@@ -220,17 +193,16 @@ model PlayerGamePitchingStats {
   popOuts                Int
   lineOuts               Int
   pitchingScore          Float?
+  game                   Game             @relation(fields: [gameId], references: [id])
+  player                 Player           @relation(fields: [playerId], references: [id])
 
   @@id([playerId, gameId])
   @@index([playerId, gameId])
 }
 
 model PlayerSeasonBattingStats {
-  playerId Int
-  seasonId Int
-  player   Player @relation(fields: [playerId], references: [id])
-  season   Season @relation(fields: [seasonId], references: [id])
-
+  playerId             Int
+  seasonId             Int
   gamesPlayed          Int
   flyOuts              Int
   groundOuts           Int
@@ -259,17 +231,16 @@ model PlayerSeasonBattingStats {
   pickoffs             Int
   popOuts              Int
   lineOuts             Int
+  player               Player @relation(fields: [playerId], references: [id])
+  season               Season @relation(fields: [seasonId], references: [id])
 
   @@id([playerId, seasonId])
   @@index([playerId, seasonId])
 }
 
 model PlayerSeasonPitchingStats {
-  playerId Int
-  seasonId Int
-  player   Player @relation(fields: [playerId], references: [id])
-  season   Season @relation(fields: [seasonId], references: [id])
-
+  playerId               Int
+  seasonId               Int
   gamesPlayed            Int
   gamesStarted           Int
   flyouts                Int
@@ -318,17 +289,16 @@ model PlayerSeasonPitchingStats {
   popOuts                Int
   lineOuts               Int
   runningPitcherScore    Float
+  player                 Player @relation(fields: [playerId], references: [id])
+  season                 Season @relation(fields: [seasonId], references: [id])
 
   @@id([playerId, seasonId])
   @@index([playerId, seasonId])
 }
 
 model TeamGameBattingStats {
-  teamId Int
-  gameId Int
-  team   Team @relation(fields: [teamId], references: [id])
-  game   Game @relation(fields: [gameId], references: [id])
-
+  teamId               Int
+  gameId               Int
   flyOuts              Int
   groundOuts           Int
   airOuts              Int
@@ -356,17 +326,16 @@ model TeamGameBattingStats {
   pickoffs             Int
   popOuts              Int
   lineOuts             Int
+  game                 Game @relation(fields: [gameId], references: [id])
+  team                 Team @relation(fields: [teamId], references: [id])
 
   @@id([teamId, gameId])
   @@index([teamId, gameId])
 }
 
 model TeamGamePitchingStats {
-  teamId Int
-  gameId Int
-  team   Team @relation(fields: [teamId], references: [id])
-  game   Game @relation(fields: [gameId], references: [id])
-
+  teamId                 Int
+  gameId                 Int
   flyouts                Int
   groundOuts             Int
   airOuts                Int
@@ -406,17 +375,16 @@ model TeamGamePitchingStats {
   passedBall             Int
   popOuts                Int
   lineOuts               Int
+  game                   Game  @relation(fields: [gameId], references: [id])
+  team                   Team  @relation(fields: [teamId], references: [id])
 
   @@id([teamId, gameId])
   @@index([teamId, gameId])
 }
 
 model TeamGameFieldingStats {
-  teamId Int
-  gameId Int
-  team   Team @relation(fields: [teamId], references: [id])
-  game   Game @relation(fields: [gameId], references: [id])
-
+  teamId         Int
+  gameId         Int
   caughtStealing Int
   stolenBases    Int
   assists        Int
@@ -425,17 +393,16 @@ model TeamGameFieldingStats {
   chances        Int
   passedBall     Int
   pickOffs       Int
+  game           Game @relation(fields: [gameId], references: [id])
+  team           Team @relation(fields: [teamId], references: [id])
 
   @@id([teamId, gameId])
   @@index([teamId, gameId])
 }
 
 model TeamSeasonBattingStats {
-  teamId   Int
-  seasonId Int
-  team     Team   @relation(fields: [teamId], references: [id])
-  season   Season @relation(fields: [seasonId], references: [id])
-
+  teamId               Int
+  seasonId             Int
   gamesPlayed          Int
   flyOuts              Int
   groundOuts           Int
@@ -464,17 +431,16 @@ model TeamSeasonBattingStats {
   pickoffs             Int
   popOuts              Int
   lineOuts             Int
+  season               Season @relation(fields: [seasonId], references: [id])
+  team                 Team   @relation(fields: [teamId], references: [id])
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
 }
 
 model TeamSeasonPitchingStats {
-  teamId   Int
-  seasonId Int
-  team     Team   @relation(fields: [teamId], references: [id])
-  season   Season @relation(fields: [seasonId], references: [id])
-
+  teamId                 Int
+  seasonId               Int
   gamesPlayed            Int
   flyouts                Int
   groundOuts             Int
@@ -516,17 +482,16 @@ model TeamSeasonPitchingStats {
   popOuts                Int
   lineOuts               Int
   teamPitchingScore      Float?
+  season                 Season @relation(fields: [seasonId], references: [id])
+  team                   Team   @relation(fields: [teamId], references: [id])
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
 }
 
 model TeamSeasonFieldingStats {
-  teamId   Int
-  seasonId Int
-  team     Team   @relation(fields: [teamId], references: [id])
-  season   Season @relation(fields: [seasonId], references: [id])
-
+  teamId         Int
+  seasonId       Int
   gamesPlayed    Int
   caughtStealing Int
   stolenBases    Int
@@ -536,6 +501,8 @@ model TeamSeasonFieldingStats {
   chances        Int
   passedBall     Int
   pickOffs       Int
+  season         Season @relation(fields: [seasonId], references: [id])
+  team           Team   @relation(fields: [teamId], references: [id])
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
@@ -545,15 +512,14 @@ model Injury {
   id             Int       @id @default(autoincrement())
   playerId       Int
   status         String    @db.VarChar(100)
-  description    String?   @db.Text
+  description    String?
   startDate      DateTime
   expectedReturn DateTime?
   resolved       Boolean   @default(false)
   updatedAt      DateTime  @updatedAt
+  player         Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@index(playerId)
+  @@index([playerId])
 }
 
 model Venue {
@@ -574,11 +540,11 @@ model Venue {
 model Weather {
   id              Int     @id @default(autoincrement())
   gameId          Int     @unique
-  game            Game    @relation(fields: [gameId], references: [id])
   lowTemperature  Int?
   highTemperature Int?
   condition       String? @db.VarChar(100)
   windSpeed       Int?
+  game            Game    @relation(fields: [gameId], references: [id])
 }
 
 model InningDetails {
@@ -592,8 +558,7 @@ model InningDetails {
   awayErrors Int?
   homeLeftOn Int?
   awayLeftOn Int?
-
-  game Game @relation(fields: [gameId], references: [id])
+  game       Game @relation(fields: [gameId], references: [id])
 
   @@id([gameId, inning])
 }
@@ -607,9 +572,8 @@ model TeamRecord {
   homeLosses Int
   awayWins   Int
   awayLosses Int
-
-  team   Team   @relation(fields: [teamId], references: [id])
-  season Season @relation(fields: [seasonId], references: [id])
+  season     Season @relation(fields: [seasonId], references: [id])
+  team       Team   @relation(fields: [teamId], references: [id])
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
@@ -620,17 +584,16 @@ model TeamELO {
   seasonId  Int
   elo       Float
   eloChange Float
-
-  team   Team   @relation(fields: [teamId], references: [id])
-  season Season @relation(fields: [seasonId], references: [id])
+  season    Season @relation(fields: [seasonId], references: [id])
+  team      Team   @relation(fields: [teamId], references: [id])
 
   @@id([teamId, seasonId])
   @@index([teamId, seasonId])
 }
 
 model GameOdds {
-  id             Int    @id @default(autoincrement())
-  gameId         Int    @unique
+  id             Int      @id @default(autoincrement())
+  gameId         Int      @unique
   homeMoneyline  String
   awayMoneyline  String
   runTotal       Float
@@ -640,8 +603,22 @@ model GameOdds {
   awaySpread     Float
   homeSpreadOdds Float
   awaySpreadOdds Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  game           Game     @relation(fields: [gameId], references: [id])
+}
 
-  game      Game     @relation(fields: [gameId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum GameStatus {
+  SCHEDULED
+  IN_PROGRESS
+  FINAL
+  POSTPONED
+}
+
+enum PitcherDecision {
+  WIN
+  LOSS
+  SAVE
+  HOLD
+  NO_DECISION
 }

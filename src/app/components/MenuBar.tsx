@@ -29,7 +29,7 @@ export const MenuBar = () => {
                         fontSize: "1.5rem",
                     }}
                 >
-                    Gamblers Anonymous
+                    MLB Analytics
                 </Typography>
 
                 {/* Desktop Links (Hidden on Small Screens) */}
