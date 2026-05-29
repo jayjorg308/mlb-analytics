@@ -1,9 +1,0 @@
-List of things that I know need to be fixed or addressed:
-- On update of a pitcher's season stats, need to make sure we're calculating Innings Pitched correctly.
-    - Currently not rolling over when it hits .3
-- When updating a team's season stats, need to make sure we're updating the teamPitchingScore
-    - Currently not happening at all. There is a script that can be run, but would like to add that to the processGames cronjob
-- Add WHIP to pitcher on home page
-- Add Odds
-    - Once we get odds showing up, would be cool to compare their implied win prob vs ours.
-- Put | in a typography on homepage for Pitcher stats
