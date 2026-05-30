@@ -2,53 +2,60 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// 2025 starting ELOs for teams
-const teamELO = [
-    { teamId: 1, elo: 1470.327397 },
-    { teamId: 2, elo: 1485.688335 },
-    { teamId: 3, elo: 1538.419729 },
-    { teamId: 4, elo: 1524.959085 },
-    { teamId: 5, elo: 1506.083977 },
-    { teamId: 6, elo: 1501.625102 },
-    { teamId: 7, elo: 1508.522741 },
-    { teamId: 8, elo: 1498.125847 },
-    { teamId: 9, elo: 1494.212134 },
-    { teamId: 10, elo: 1496.17205 },
-    { teamId: 11, elo: 1523.568945 },
-    { teamId: 12, elo: 1529.325583 },
-    { teamId: 13, elo: 1430.852045 },
-    { teamId: 14, elo: 1471.801353 },
-    { teamId: 15, elo: 1531.704017 },
-    { teamId: 16, elo: 1530.888465 },
-    { teamId: 17, elo: 1457.83941 },
-    { teamId: 18, elo: 1530.547298 },
-    { teamId: 19, elo: 1515.177857 },
-    { teamId: 20, elo: 1500.016918 },
-    { teamId: 21, elo: 1520.828299 },
-    { teamId: 22, elo: 1497.586195 },
-    { teamId: 23, elo: 1513.221695 },
-    { teamId: 24, elo: 1455.529991 },
-    { teamId: 25, elo: 1515.664248 },
-    { teamId: 26, elo: 1528.742317 },
-    { teamId: 27, elo: 1509.382757 },
-    { teamId: 28, elo: 1556.838102 },
-    { teamId: 29, elo: 1476.838099 },
-    { teamId: 30, elo: 1529.507817 },
+// 2026 starting ELOs, keyed by abbreviation
+const teamELO: { abbreviation: string; elo: number }[] = [
+    { abbreviation: "ARI", elo: 1508.497990 },
+    { abbreviation: "ATH", elo: 1496.329883 },
+    { abbreviation: "ATL", elo: 1505.881497 },
+    { abbreviation: "BAL", elo: 1493.799785 },
+    { abbreviation: "BOS", elo: 1527.867743 },
+    { abbreviation: "CHC", elo: 1529.578148 },
+    { abbreviation: "CHW", elo: 1467.441171 },
+    { abbreviation: "CIN", elo: 1507.513967 },
+    { abbreviation: "CLE", elo: 1513.655539 },
+    { abbreviation: "COL", elo: 1419.851802 },
+    { abbreviation: "DET", elo: 1505.530823 },
+    { abbreviation: "HOU", elo: 1508.800799 },
+    { abbreviation: "KC", elo: 1511.493709 },
+    { abbreviation: "LAA", elo: 1462.897755 },
+    { abbreviation: "LAD", elo: 1551.629821 },
+    { abbreviation: "MIA", elo: 1492.546809 },
+    { abbreviation: "MIL", elo: 1538.481357 },
+    { abbreviation: "MIN", elo: 1474.981448 },
+    { abbreviation: "NYM", elo: 1510.661705 },
+    { abbreviation: "NYY", elo: 1533.975627 },
+    { abbreviation: "PHI", elo: 1537.646083 },
+    { abbreviation: "PIT", elo: 1493.286687 },
+    { abbreviation: "SD", elo: 1526.126033 },
+    { abbreviation: "SEA", elo: 1524.656303 },
+    { abbreviation: "SF", elo: 1504.741355 },
+    { abbreviation: "STL", elo: 1487.844851 },
+    { abbreviation: "TB", elo: 1500.932182 },
+    { abbreviation: "TEX", elo: 1513.112978 },
+    { abbreviation: "TOR", elo: 1540.571743 },
+    { abbreviation: "WSH", elo: 1459.662950 },
 ];
+
+// Abbreviations that differ between the source ELO data and MLB's API
+const ABBR_ALIASES: Record<string, string> = {
+    ARI: "AZ",
+    CHW: "CWS",
+};
 
 async function seedTeamELO() {
     try {
-        // get teams from db
         const teams = await prisma.team.findMany();
 
         for (const team of teams) {
-            const elo = teamELO.find((t) => t.teamId === team.id)?.elo || null;
+            const elo =
+                teamELO.find((t) => (ABBR_ALIASES[t.abbreviation] ?? t.abbreviation) === team.abbreviation)?.elo ??
+                null;
 
             if (!elo) {
-                console.log(`No ELO found for team ${team.name}`);
+                console.log(`No ELO found for team ${team.name} (${team.abbreviation})`);
                 continue;
             }
-            // Insert player into the database
+
             await prisma.teamELO.create({
                 data: {
                     teamId: team.id,

@@ -7,7 +7,7 @@ async function seedGames() {
     try {
         // Fetch MLB schedule from the API
         const { data } = await axios.get(
-            "https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2025-03-18&endDate=2025-09-28&season=2025&gameType=R",
+            "https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2026-03-25&endDate=2026-09-27&season=2026&gameType=R",
         );
 
         const dates = data.dates;

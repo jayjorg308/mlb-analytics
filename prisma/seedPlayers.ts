@@ -47,7 +47,7 @@ async function seedPlayers() {
                         position: position.abbreviation,
                         uniformNumber: parseInt(jerseyNumber as string),
                         teamId: team.id,
-                        photoUrl: ``,
+                        photoUrl: `https://midfield.mlbstatic.com/v1/people/${person.id}/spots/120`,
                     },
                 });
 

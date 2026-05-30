@@ -24,7 +24,7 @@ async function seedGames() {
                     city: franchiseName,
                     name: clubName,
                     abbreviation: abbreviation,
-                    logo_url: ``,
+                    logo_url: `https://www.mlbstatic.com/team-logos/${id}.svg`,
                     venue_id: dbVenue?.id,
                 },
             });

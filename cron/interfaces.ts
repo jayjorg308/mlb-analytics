@@ -45,6 +45,8 @@ export interface BoxscoreTeams {
 export interface TeamBoxscoreStats {
     teamStats: TeamStats;
     players: Record<string, PlayerBoxscore>;
+    battingOrder?: number[];
+    pitchers?: number[];
 }
 
 export interface PlayerBoxscore {
