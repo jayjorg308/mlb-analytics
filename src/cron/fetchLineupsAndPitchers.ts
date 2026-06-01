@@ -197,11 +197,9 @@ export async function updateLineupsAndPitchers() {
         }
     } catch (error) {
         console.error("Error updating probable pitchers:", error);
-    } finally {
-        await prisma.$disconnect();
     }
 }
 
 if (require.main === module) {
-    updateLineupsAndPitchers();
+    updateLineupsAndPitchers().finally(() => prisma.$disconnect());
 }
