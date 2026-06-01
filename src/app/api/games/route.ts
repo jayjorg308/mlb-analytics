@@ -118,6 +118,11 @@ export async function GET(req: NextRequest) {
                         },
                     },
                 }, // Alias for away pitcher
+                InningDetails: {
+                    select: { inning: true },
+                    orderBy: { inning: "desc" },
+                    take: 1,
+                },
             },
             orderBy: {
                 date: "asc",

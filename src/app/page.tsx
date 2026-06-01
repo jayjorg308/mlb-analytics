@@ -82,6 +82,7 @@ type Game = {
         | null;
     battingOrderHome: number[];
     battingOrderAway: number[];
+    InningDetails: Array<{ inning: number }>;
 };
 
 export default function Home() {
@@ -241,7 +242,10 @@ export default function Home() {
                                                 sx={{ fontWeight: "bold", mb: 1 }}
                                             >
                                                 {game.status === "FINAL"
-                                                    ? "Final"
+                                                    ? (() => {
+                                                          const maxInning = game.InningDetails[0]?.inning ?? 9;
+                                                          return maxInning > 9 ? `Final/${maxInning}` : "Final";
+                                                      })()
                                                     : new Date(game.date).toLocaleTimeString([], {
                                                           hour: "2-digit",
                                                           minute: "2-digit",
@@ -368,6 +372,17 @@ export default function Home() {
                                                                 <Typography variant="body2">
                                                                     {awayPitcherStats?.whip ?? "-.--"} WHIP
                                                                 </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {game.awayStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.runningPitcherScore !==
+                                                                    undefined
+                                                                        ? game.awayStartingPitcher.PlayerSeasonPitchingStats[0].runningPitcherScore.toFixed(
+                                                                              1,
+                                                                          )
+                                                                        : "-.-"}{" "}
+                                                                    SCR
+                                                                </Typography>
                                                             </Box>
                                                         </Box>
                                                     ) : (
@@ -407,6 +422,17 @@ export default function Home() {
                                                                 <Typography variant="body2">|</Typography>
                                                                 <Typography variant="body2">
                                                                     {homePitcherStats?.whip ?? "-.--"} WHIP
+                                                                </Typography>
+                                                                <Typography variant="body2">|</Typography>
+                                                                <Typography variant="body2">
+                                                                    {game.homeStartingPitcher
+                                                                        .PlayerSeasonPitchingStats[0]?.runningPitcherScore !==
+                                                                    undefined
+                                                                        ? game.homeStartingPitcher.PlayerSeasonPitchingStats[0].runningPitcherScore.toFixed(
+                                                                              1,
+                                                                          )
+                                                                        : "-.-"}{" "}
+                                                                    SCR
                                                                 </Typography>
                                                             </Box>
                                                         </Box>
