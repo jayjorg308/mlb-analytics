@@ -67,4 +67,6 @@ async function fixIP() {
     }
 }
 
-fixIP();
+if (require.main === module) {
+    fixIP();
+}

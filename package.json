@@ -8,10 +8,10 @@
         "start": "next start",
         "lint": "next lint",
         "generate": "prisma generate",
-        "fetch:lineups": "ts-node cron/fetchLineupsAndPitchers.ts",
-        "process:games": "ts-node cron/processGames.ts",
-        "fix:pitching": "ts-node cron/fixPitchingScores.ts",
-        "fix:ip": "ts-node cron/fixIP.ts"
+        "fetch:lineups": "ts-node src/cron/fetchLineupsAndPitchers.ts",
+        "process:games": "ts-node src/cron/processGames.ts",
+        "fix:pitching": "ts-node src/cron/fixPitchingScores.ts",
+        "fix:ip": "ts-node src/cron/fixIP.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
@@ -34,6 +34,7 @@
         "dotenv": "^16.4.7",
         "luxon": "^3.6.1",
         "next": "^15.5.18",
+        "node-cron": "^4.2.1",
         "node-fetch": "^3.3.2",
         "pg": "^8.14.0",
         "react": "^19.0.0",
@@ -44,6 +45,7 @@
         "@tailwindcss/postcss": "^4.0.13",
         "@types/luxon": "^3.6.2",
         "@types/node": "^20.17.24",
+        "@types/node-cron": "^3.0.11",
         "@types/node-fetch": "^2.6.12",
         "@types/pg": "^8.11.11",
         "@types/react": "^19",

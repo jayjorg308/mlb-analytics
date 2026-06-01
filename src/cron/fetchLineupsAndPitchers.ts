@@ -124,7 +124,7 @@ const mapMlbApiIdsToPlayerIds = async (mlbApiIds: number[]): Promise<Record<numb
     return Object.fromEntries(players.map((player) => [player.mlb_api_id, player.id]));
 };
 
-async function updateLineupsAndPitchers() {
+export async function updateLineupsAndPitchers() {
     try {
         const today = new Date().toLocaleDateString();
         const { data } = await axios.get(
@@ -202,4 +202,6 @@ async function updateLineupsAndPitchers() {
     }
 }
 
-updateLineupsAndPitchers();
+if (require.main === module) {
+    updateLineupsAndPitchers();
+}

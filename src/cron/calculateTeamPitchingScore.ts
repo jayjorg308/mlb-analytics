@@ -39,4 +39,6 @@ async function calculateTeamPitchingScore() {
     }
 }
 
-calculateTeamPitchingScore();
+if (require.main === module) {
+    calculateTeamPitchingScore();
+}

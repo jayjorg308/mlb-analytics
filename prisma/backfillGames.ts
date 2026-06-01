@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { getGameResults, prisma } from "../cron/processGameDay";
+import { getGameResults, prisma } from "../src/cron/processGameDay";
 
 // Inclusive on both ends. Override via CLI:
 //   npx ts-node prisma/backfillGames.ts 2026-03-25 2026-05-28

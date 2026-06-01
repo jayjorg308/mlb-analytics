@@ -334,4 +334,6 @@ async function updateVenues() {
     }
 }
 
-updateVenues();
+if (require.main === module) {
+    updateVenues();
+}

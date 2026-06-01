@@ -65,4 +65,6 @@ async function fixPitchingScores() {
     }
 }
 
-fixPitchingScores();
+if (require.main === module) {
+    fixPitchingScores();
+}
