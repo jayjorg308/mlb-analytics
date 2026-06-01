@@ -769,6 +769,26 @@ async function updateTeamSeasonPitchingStats(
             },
         });
     }
+
+    const starterScores = await tx.playerGamePitchingStats.findMany({
+        where: {
+            gamesStarted: 1,
+            pitchingScore: { not: null },
+            player: { teamId: teamId },
+            game: { season_id: seasonId, status: GameStatus.FINAL },
+        },
+        select: { pitchingScore: true },
+    });
+
+    const teamPitchingScore =
+        starterScores.length > 0
+            ? starterScores.reduce((acc, s) => acc + (s.pitchingScore ?? 0), 0) / starterScores.length
+            : null;
+
+    await tx.teamSeasonPitchingStats.update({
+        where: { teamId_seasonId: { teamId, seasonId } },
+        data: { teamPitchingScore },
+    });
 }
 
 async function updateTeamSeasonFieldingStats(

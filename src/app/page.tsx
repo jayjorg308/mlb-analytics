@@ -85,8 +85,8 @@ type Game = {
 };
 
 export default function Home() {
-    const firstGameDate = dayjs("2025-03-18");
-    const lastGameDate = dayjs("2025-09-28");
+    const firstGameDate = dayjs("2026-03-25");
+    const lastGameDate = dayjs("2026-09-27");
     const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
     const [games, setGames] = useState<Game[]>([]);
     const [isCardOpen, setIsCardOpen] = useState(false);
@@ -341,7 +341,7 @@ export default function Home() {
                                                         <Image
                                                             src={game.awayStartingPitcher.photoUrl}
                                                             alt={game.awayStartingPitcher.lastName}
-                                                            width={36}
+                                                            width={54}
                                                             height={54}
                                                             style={{ borderRadius: "50%" }}
                                                         />
@@ -381,7 +381,7 @@ export default function Home() {
                                                         <Image
                                                             src={game.homeStartingPitcher.photoUrl}
                                                             alt={game.homeStartingPitcher.lastName}
-                                                            width={36}
+                                                            width={54}
                                                             height={54}
                                                             style={{ borderRadius: "50%" }}
                                                         />
