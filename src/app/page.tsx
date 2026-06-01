@@ -224,7 +224,7 @@ export default function Home() {
                                 : null;
 
                             return (
-                                <Grid item xs={12} sm={6} md={4} lg={3} key={game.id}>
+                                <Grid item xs={12} sm={6} md={4} key={game.id}>
                                     <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
                                         <Card
                                             sx={{
