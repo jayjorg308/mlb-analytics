@@ -1,3 +1,5 @@
+![Deploy](https://github.com/jayjorg308/mlb-analytics/actions/workflows/deploy.yml/badge.svg)
+
 # MLB Daily Analytics
  
 A personal sports analytics platform for tracking MLB games, team performance, and pitcher statistics. Built as a hands-on exploration of full-stack engineering, sports data, and AWS deployment — driven by a longtime interest in sports analytics.
@@ -96,7 +98,6 @@ The Dockerfile uses a multi-stage build to keep the production image lean. Datab
 - **D3.js visualizations.** Currently extending the stats page with interactive charts — pitcher comparison views, pitch-type breakdowns, and team-level visualizations. The existing tables work but visualization is where the data gets genuinely useful.
 - **Expanded hitting stats.** Pitching has been the focus so far; hitting metrics are on the roadmap.
 - **Historical comparisons.** Year-over-year and rolling-window views for team and player performance.
-- **CI/CD via GitHub Actions** to automate the build → ECR → ECS deployment cycle.
 
 ---
 
