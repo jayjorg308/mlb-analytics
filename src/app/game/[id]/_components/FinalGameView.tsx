@@ -9,7 +9,7 @@ export default function FinalGameView({ detail }: { detail: GameDetail }) {
     const pitcherStatsMap = new Map(game.PlayerGamePitchingStats.map((s) => [s.playerId, s]));
 
     return (
-        <Box sx={{ maxWidth: 900, mx: "auto", mt: 4, p: 2 }}>
+        <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
             <Typography variant="h4" align="center" sx={{ mb: 2 }}>
                 {game.awayTeam.name} @ {game.homeTeam.name}
             </Typography>

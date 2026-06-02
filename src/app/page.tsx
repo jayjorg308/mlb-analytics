@@ -1,14 +1,22 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { Box, Card, Typography, Divider, Grid, Button } from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import Image from "next/image";
 import { Player, Team } from "@prisma/client";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getEloPrediction, getPredictionForExport } from "./services/getEloPrediction";
 import { getPitcherStats } from "./shared/statCalcUtils";
 import BettingCardDialog from "./components/BettingCardDialog";
+
+dayjs.extend(customParseFormat);
+
+const SHOW_EXPORT_AND_CARD = false;
 
 type Game = {
     id: number;
@@ -86,9 +94,39 @@ type Game = {
 };
 
 export default function Home() {
+    return (
+        <Suspense fallback={null}>
+            <Dashboard />
+        </Suspense>
+    );
+}
+
+function Dashboard() {
     const firstGameDate = dayjs("2026-03-25");
     const lastGameDate = dayjs("2026-09-27");
-    const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const dateParam = searchParams.get("date");
+    const parsed = dateParam ? dayjs(dateParam, "YYYY-MM-DD", true) : null;
+    const selectedDate: Dayjs = parsed?.isValid() ? parsed : dayjs();
+    const dateKey = selectedDate.format("YYYY-MM-DD");
+    const isToday = selectedDate.isSame(dayjs(), "day");
+    const atFirstGame = selectedDate.isSame(firstGameDate, "day");
+    const atLastGame = selectedDate.isSame(lastGameDate, "day");
+
+    const setSelectedDate = (next: Dayjs) => {
+        const clamped = next.isBefore(firstGameDate)
+            ? firstGameDate
+            : next.isAfter(lastGameDate)
+                ? lastGameDate
+                : next;
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("date", clamped.format("YYYY-MM-DD"));
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
+
     const [games, setGames] = useState<Game[]>([]);
     const [isCardOpen, setIsCardOpen] = useState(false);
 
@@ -102,13 +140,13 @@ export default function Home() {
 
     useEffect(() => {
         const fetchGames = async () => {
-            const res = await fetch(`/api/games?date=${selectedDate.format("YYYY-MM-DD")}`);
+            const res = await fetch(`/api/games?date=${dateKey}`);
             const data = await res.json();
             setGames(data);
         };
 
         fetchGames();
-    }, [selectedDate]);
+    }, [dateKey]);
 
     const exportSheet = async () => {
         const results = games.map((game) => {
@@ -171,20 +209,58 @@ export default function Home() {
         <>
             <Box sx={{ maxWidth: 1200, mx: "auto", mt: 4, p: 2 }}>
                 {/* Calendar Date Picker */}
-                <Box sx={{ display: "flex", justifyContent: "center", mb: 3, gap: 2 }}>
-                    <DatePicker
-                        value={selectedDate}
-                        onChange={(date) => date && setSelectedDate(date)}
-                        minDate={firstGameDate}
-                        maxDate={lastGameDate}
-                    />
-                    <Button variant="outlined" onClick={exportSheet}>
-                        Export
-                    </Button>
-
-                    <Button variant="contained" onClick={handleCardOpen}>
-                        Today&apos;s Card
-                    </Button>
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto 1fr",
+                        alignItems: "center",
+                        mb: 3,
+                    }}
+                >
+                    <Box />
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => setSelectedDate(selectedDate.subtract(1, "day"))}
+                            disabled={atFirstGame}
+                            aria-label="Previous day"
+                            sx={{ minWidth: 56, height: 56, p: 0 }}
+                        >
+                            <ChevronLeftIcon />
+                        </Button>
+                        <DatePicker
+                            value={selectedDate}
+                            onChange={(date) => date && setSelectedDate(date)}
+                            minDate={firstGameDate}
+                            maxDate={lastGameDate}
+                        />
+                        <Button
+                            variant="outlined"
+                            onClick={() => setSelectedDate(selectedDate.add(1, "day"))}
+                            disabled={atLastGame}
+                            aria-label="Next day"
+                            sx={{ minWidth: 56, height: 56, p: 0 }}
+                        >
+                            <ChevronRightIcon />
+                        </Button>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 2, pl: 2 }}>
+                        {!isToday && (
+                            <Button variant="text" onClick={() => setSelectedDate(dayjs())}>
+                                Back to Today
+                            </Button>
+                        )}
+                        {SHOW_EXPORT_AND_CARD && (
+                            <>
+                                <Button variant="outlined" onClick={exportSheet} sx={{ height: 56 }}>
+                                    Export
+                                </Button>
+                                <Button variant="contained" onClick={handleCardOpen} sx={{ height: 56 }}>
+                                    Today&apos;s Card
+                                </Button>
+                            </>
+                        )}
+                    </Box>
                 </Box>
 
                 {/* Game Cards */}
@@ -226,7 +302,11 @@ export default function Home() {
 
                             return (
                                 <Grid item xs={12} sm={6} md={4} key={game.id}>
-                                    <Link href={`/game/${game.id}`} passHref style={{ textDecoration: "none" }}>
+                                    <Link
+                                        href={`/game/${game.id}?date=${dateKey}`}
+                                        passHref
+                                        style={{ textDecoration: "none" }}
+                                    >
                                         <Card
                                             sx={{
                                                 p: 2,
@@ -449,7 +529,7 @@ export default function Home() {
                     </Grid>
                 )}
             </Box>
-            <BettingCardDialog open={isCardOpen} handleClose={handleCardClose} />
+            {SHOW_EXPORT_AND_CARD && <BettingCardDialog open={isCardOpen} handleClose={handleCardClose} />}
         </>
     );
 }
