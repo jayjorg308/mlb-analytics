@@ -1,53 +1,53 @@
 ![Deploy](https://github.com/jayjorg308/mlb-analytics/actions/workflows/deploy.yml/badge.svg)
 
 # MLB Daily Analytics
- 
+
 A personal sports analytics platform for tracking MLB games, team performance, and pitcher statistics. Built as a hands-on exploration of full-stack engineering, sports data, and AWS deployment — driven by a longtime interest in sports analytics.
- 
+
 **Live site:** [jaysonjorgensen.dev](https://jaysonjorgensen.dev)
- 
+
 ![Dashboard view](./docs/screenshots/dashboard.png)
- 
+
 ---
- 
+
 ## What it does
- 
+
 The application pulls game data, team records, and player statistics from MLB's official API on a scheduled basis, transforms and stores the data in PostgreSQL, and serves it through a Next.js frontend. There are three main areas:
- 
+
 ### Dashboard
- 
+
 A daily view of every MLB game scheduled for the day — matchups, starting pitchers for each side, computed win probabilities derived from team ELO, and final scores once games conclude. Designed to be the page I'd actually open before watching a game.
- 
+
 ![Game card closeup](./docs/screenshots/game-card.png)
- 
+
 ### Standings
- 
+
 Team records grouped by full league standings, with home/away splits, current ELO rating, and season-long ELO change. The ELO calculation runs after each completed game, adjusting team ratings based on outcome and prior expected win probability. It's a more nuanced view of team strength than win/loss alone — a team with a high ELO and a mediocre record has been losing close games to strong opponents, while a team with a low ELO and a great record has been beating weak teams convincingly. Both stories matter.
- 
+
 ![Standings with ELO ratings](./docs/screenshots/standings.png)
- 
+
 ### Stats
- 
+
 Pitching-focused statistics covering both individual pitchers and team-level pitching performance. The decision to focus on pitching reflects personal interest — pitching analytics is where most of the interesting modern baseball research happens, and the data is rich enough to be worth digging into.
- 
+
 ![Individual pitcher stats](./docs/screenshots/pitcher-stats.png)
- 
+
 The Average Pitching Score column is a custom metric calculated per game and aggregated across the season. More on the formula below.
- 
+
 ![Team pitching stats](./docs/screenshots/team-pitching.png)
- 
+
 ---
- 
+
 ## How pitching scores are calculated
- 
+
 Every pitcher in the database gets a per-appearance score and a season average. The formula is:
- 
+
 ```
 Score = 47.4 + (1.5 × outs) + strikeouts − (2 × walks) − (2 × hits) − (3 × runs) − (4 × home runs)
 ```
- 
+
 Each component reflects a deliberate weighting choice:
- 
+
 - **47.4 baseline** anchors the score so an average outing lands in a familiar range (roughly 50 for a league-average start)
 - **+1.5 per out** rewards length — a pitcher who works deep into a game is doing real value
 - **+1 per strikeout** rewards dominance independent of defense
@@ -55,25 +55,72 @@ Each component reflects a deliberate weighting choice:
 - **−2 per hit** penalizes contact allowed
 - **−3 per run** penalizes the actual scoring outcome regardless of how it happened
 - **−4 per home run** adds an extra penalty for the worst possible outcome of contact
-The formula is in the tradition of Bill James's original Game Score metric, with adaptations: the "1 per out + 2 per inning after the 4th" structure of Game Score is collapsed into a flat 1.5-per-out multiplier, and a home run penalty is added because in modern baseball home runs deserve to be tracked as a distinct category, not just absorbed into the runs penalty.
- 
+  The formula is in the tradition of Bill James's original Game Score metric, with adaptations: the "1 per out + 2 per inning after the 4th" structure of Game Score is collapsed into a flat 1.5-per-out multiplier, and a home run penalty is added because in modern baseball home runs deserve to be tracked as a distinct category, not just absorbed into the runs penalty.
+
 For reference, here's roughly how scores translate:
- 
-| Score | Interpretation |
-|-------|----------------|
-| 70+ | Excellent start |
-| 55-70 | Solid outing |
-| 40-55 | Mediocre |
-| Below 40 | Poor |
- 
+
+| Score    | Interpretation  |
+| -------- | --------------- |
+| 70+      | Excellent start |
+| 55-70    | Solid outing    |
+| 40-55    | Mediocre        |
+| Below 40 | Poor            |
+
 The Team Average Pitching Score on the team stats page averages this metric across every starting pitcher appearance for the team. It serves as a rough single-number indicator of starting rotation quality — useful for at-a-glance comparisons that ERA alone can flatten.
+
+---
+ 
+## Pitcher score visualization
+ 
+Clicking on a starting pitcher in the game detail page opens an interactive D3.js visualization showing that pitcher's score across every start of the season. The chart is designed to answer the question a scout or analyst would actually ask when looking up a pitcher: "how have they been doing, and how did they get to where they are right now?"
+ 
+![Pitcher score chart](./docs/screenshots/pitcher-score-chart.png)
+ 
+A few intentional design choices:
+ 
+**Quality bands as background color.** Each score range (Exceptional, Good, Mediocre, Poor) has its own subtle background band. The viewer doesn't need to read y-axis values to understand a point's quality — the color it sits on tells them. Points are also colored by tier so the legend is consistent whether you're looking at the dot or the band it lives in.
+ 
+**Season average as a solid horizontal line.** Gives an immediate anchor: "this pitcher's overall season has been X." The label sits at the right edge of the chart for easy reading.
+ 
+**5-game rolling average as a dashed line.** Smooths out single-start noise and reveals trend. When the dashed line slopes up over a few starts, the pitcher's been on a hot streak; when it dips, the opposite. The rolling average is more useful for "are they trending up or down right now?" than the season average is.
+ 
+**Interactive tooltips on hover.** Each point reveals the date, opponent (with team logo and W/L outcome), and the full stat line that produced that score — innings pitched, strikeouts, walks, hits, runs, and home runs allowed. This turns the chart from a summary into an investigative tool: spot an outlier point, hover, see exactly what happened in that game.
+ 
+![Pitcher score chart with tooltip](./docs/screenshots/pitcher-score-chart-tooltip.png)
+ 
+### How the 5-game rolling average is computed
+ 
+For each start, the rolling average value is the mean of that start's score plus the four previous starts (a trailing window of 5).
+ 
+| Plotted at | Window of games averaged |
+|------------|--------------------------|
+| Start 5    | Games 1–5                |
+| Start 6    | Games 2–6                |
+| Start 7    | Games 3–7                |
+| ...        | ...                      |
+| Start 12   | Games 8–12               |
+ 
+For the first four starts of the season there aren't five prior games yet, so the window expands to use whatever is available:
+ 
+| Plotted at | Actually averaging       |
+|------------|--------------------------|
+| Start 1    | Game 1 only              |
+| Start 2    | Games 1–2                |
+| Start 3    | Games 1–3                |
+| Start 4    | Games 1–4                |
+| Start 5+   | Trailing 5 games         |
+ 
+This is a common convention in time-series smoothing — it lets the trend line cover the entire season rather than starting partway through. The tradeoff is that the early points on the rolling line are noisier (an average of 1-3 games is essentially the raw value), but the alternative of leaving the first four starts uncovered is visually worse and makes the chart harder to read.
+ 
+---
 
 ## Tech stack
 
-**Frontend:** Next.js, React, TypeScript, Styled Components
+**Frontend:** Next.js, React, TypeScript, Styled Components, D3.js
 **Backend:** Next.js API routes, Prisma ORM
 **Database:** PostgreSQL
 **Infrastructure:** Docker, AWS (ECS Fargate, ECR, RDS, ACM, Application Load Balancer), Cloudflare DNS
+**CI/CD:** GitHub Actions
 **Data source:** MLB's official statistics API
 
 ---
@@ -95,9 +142,9 @@ The Dockerfile uses a multi-stage build to keep the production image lean. Datab
 
 ## What's next
 
-- **D3.js visualizations.** Currently extending the stats page with interactive charts — pitcher comparison views, pitch-type breakdowns, and team-level visualizations. The existing tables work but visualization is where the data gets genuinely useful.
-- **Expanded hitting stats.** Pitching has been the focus so far; hitting metrics are on the roadmap.
-- **Historical comparisons.** Year-over-year and rolling-window views for team and player performance.
+- **Comparison views** between two pitchers on the same chart — overlay two season-long score lines to instantly compare trajectories
+- **Expanded hitting stats.** Pitching has been the focus so far; hitting metrics are on the roadmap
+- **Historical comparisons.** Year-over-year and rolling-window views for team and player performance
 
 ---
 

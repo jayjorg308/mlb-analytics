@@ -5,12 +5,12 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogContentText,
     DialogActions,
     Button,
     useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import PitcherSeasonScoreChart from "@/app/components/PitcherSeasonScoreChart";
 
 type Pitcher = {
     id: number;
@@ -55,16 +55,14 @@ export default function PitcherDialog({ pitcher, children }: { pitcher: Pitcher;
                 open={open}
                 onClose={handleClose}
                 aria-labelledby="pitcher-details-title"
-                maxWidth="sm"
+                maxWidth="lg"
                 fullWidth
             >
                 <DialogTitle id="pitcher-details-title">
                     {pitcher.firstName} {pitcher.lastName}
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        In-depth pitcher analysis coming soon.
-                    </DialogContentText>
+                    <PitcherSeasonScoreChart pitcherId={pitcher.id} />
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outlined" onClick={handleClose} autoFocus>
