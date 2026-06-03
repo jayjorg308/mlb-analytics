@@ -94,7 +94,7 @@ export async function GET(
                       seasonStats.earnedRuns,
                       seasonStats.baseOnBalls,
                       seasonStats.hits,
-                      seasonStats.inningsPitched,
+                      seasonStats.outs,
                   );
                   return {
                       seasonAverageScore: seasonStats.runningPitcherScore,

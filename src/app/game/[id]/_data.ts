@@ -9,6 +9,7 @@ const seasonPitchingInclude = {
             losses: true,
             earnedRuns: true,
             inningsPitched: true,
+            outs: true,
             baseOnBalls: true,
             hits: true,
             strikeOuts: true,

@@ -56,7 +56,7 @@ export async function GET() {
                     pitcherSeason.earnedRuns || 0,
                     pitcherSeason.baseOnBalls || 0,
                     pitcherSeason.hits || 0,
-                    pitcherSeason.inningsPitched || 0,
+                    pitcherSeason.outs || 0,
                 );
                 return {
                     id: pitcherSeason.playerId,
@@ -99,7 +99,7 @@ export async function GET() {
                     team.earnedRuns || 0,
                     team.baseOnBalls || 0,
                     team.hits || 0,
-                    team.inningsPitched || 0,
+                    team.outs || 0,
                 );
                 return {
                     id: team.teamId,

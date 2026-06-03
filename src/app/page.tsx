@@ -67,6 +67,7 @@ type Game = {
                   losses: number;
                   earnedRuns: number;
                   inningsPitched: number;
+                  outs: number;
                   baseOnBalls: number;
                   hits: number;
                   runningPitcherScore: number;
@@ -82,6 +83,7 @@ type Game = {
                   losses: number;
                   earnedRuns: number;
                   inningsPitched: number;
+                  outs: number;
                   baseOnBalls: number;
                   hits: number;
                   runningPitcherScore: number;
@@ -287,7 +289,7 @@ function Dashboard() {
                                       game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
                                       game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
                                       game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
-                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                                      game.awayStartingPitcher.PlayerSeasonPitchingStats[0]?.outs ?? 0,
                                   )
                                 : null;
 
@@ -296,7 +298,7 @@ function Dashboard() {
                                       game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.earnedRuns ?? 0,
                                       game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.baseOnBalls ?? 0,
                                       game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.hits ?? 0,
-                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.inningsPitched ?? 0,
+                                      game.homeStartingPitcher.PlayerSeasonPitchingStats[0]?.outs ?? 0,
                                   )
                                 : null;
 

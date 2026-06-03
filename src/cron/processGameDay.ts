@@ -16,6 +16,10 @@ import {
 
 export const prisma = new PrismaClient();
 
+// Convert integer outs to baseball-notation innings pitched.
+// 19 outs → 6.1 (6 full innings + 1 out), 20 outs → 6.2, 21 outs → 7.0
+const outsToBaseballIP = (outs: number): number => Math.floor(outs / 3) + (outs % 3) / 10;
+
 async function getGamesForDay(date: string): Promise<GameDetails[]> {
     console.log(`Fetching games for ${date}`);
     const { data }: { data: ScheduleData } = await axios.get(
@@ -477,7 +481,7 @@ async function updateTeamGameStats(
                         caughtStealing: pitchingStats.caughtStealing,
                         stolenBases: pitchingStats.stolenBases,
                         numberOfPitches: pitchingStats.numberOfPitches,
-                        inningsPitched: parseInt(pitchingStats.inningsPitched),
+                        inningsPitched: outsToBaseballIP(pitchingStats.outs),
                         saveOpporunities: pitchingStats.saveOpportunities,
                         earnedRuns: pitchingStats.earnedRuns,
                         battersFaced: pitchingStats.battersFaced,
@@ -553,7 +557,14 @@ async function updateTeamSeasonStats(
                     : (teamData.teamStats?.fielding as GameFieldingStatsTeam);
 
             if (battingstats) await updateTeamSeasonBattingStats(teamId, existingGame.season_id, battingstats, tx);
-            if (pitchingStats) await updateTeamSeasonPitchingStats(teamId, existingGame.season_id, pitchingStats, tx);
+            if (pitchingStats)
+                await updateTeamSeasonPitchingStats(
+                    teamId,
+                    existingGame.season_id,
+                    existingGame.id,
+                    pitchingStats,
+                    tx,
+                );
             if (fieldingStats) await updateTeamSeasonFieldingStats(teamId, existingGame.season_id, fieldingStats, tx);
 
             console.log(`Updated season stats for team ${teamId} after game ${game.gamePk}`);
@@ -658,6 +669,7 @@ async function updateTeamSeasonBattingStats(
 async function updateTeamSeasonPitchingStats(
     teamId: number,
     seasonId: number,
+    currentGameId: number,
     gameStats: GamePitchingStatsTeam,
     tx: Prisma.TransactionClient,
 ) {
@@ -692,7 +704,7 @@ async function updateTeamSeasonPitchingStats(
                 caughtStealing: gameStats.caughtStealing,
                 stolenBases: gameStats.stolenBases,
                 numberOfPitches: gameStats.numberOfPitches,
-                inningsPitched: parseFloat(gameStats.inningsPitched),
+                inningsPitched: outsToBaseballIP(gameStats.outs),
                 saveOpporunities: gameStats.saveOpportunities,
                 earnedRuns: gameStats.earnedRuns,
                 battersFaced: gameStats.battersFaced,
@@ -743,7 +755,7 @@ async function updateTeamSeasonPitchingStats(
                 caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
                 stolenBases: seasonStats.stolenBases + gameStats.stolenBases,
                 numberOfPitches: seasonStats.numberOfPitches + gameStats.numberOfPitches,
-                inningsPitched: seasonStats.inningsPitched + parseFloat(gameStats.inningsPitched),
+                inningsPitched: outsToBaseballIP(seasonStats.outs + gameStats.outs),
                 saveOpporunities: seasonStats.saveOpporunities + gameStats.saveOpportunities,
                 earnedRuns: seasonStats.earnedRuns + gameStats.earnedRuns,
                 battersFaced: seasonStats.battersFaced + gameStats.battersFaced,
@@ -770,20 +782,82 @@ async function updateTeamSeasonPitchingStats(
         });
     }
 
-    const starterScores = await tx.playerGamePitchingStats.findMany({
+    // Attribute starts via Game.startingPitcher{Home,Away}Id rather than Player.teamId
+    // so a starter traded mid-season still counts for the team he pitched for that day.
+    const games = await tx.game.findMany({
         where: {
-            gamesStarted: 1,
-            pitchingScore: { not: null },
-            player: { teamId: teamId },
-            game: { season_id: seasonId, status: GameStatus.FINAL },
+            season_id: seasonId,
+            status: GameStatus.FINAL,
+            OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
         },
-        select: { pitchingScore: true },
+        select: {
+            id: true,
+            homeTeamId: true,
+            startingPitcherHomeId: true,
+            startingPitcherAwayId: true,
+            PlayerGamePitchingStats: {
+                where: { gamesStarted: 1 },
+                select: { playerId: true, pitchingScore: true },
+            },
+        },
     });
 
+    const scores: number[] = [];
+    for (const game of games) {
+        const starterId =
+            game.homeTeamId === teamId ? game.startingPitcherHomeId : game.startingPitcherAwayId;
+        if (starterId == null) {
+            console.warn(
+                `teamSeasonPitchingScore: FINAL game has no startingPitcher${game.homeTeamId === teamId ? "Home" : "Away"}Id; skipping`,
+                { teamId, seasonId, gameId: game.id },
+            );
+            continue;
+        }
+        const starter = game.PlayerGamePitchingStats.find((s) => s.playerId === starterId);
+        if (starter?.pitchingScore != null) {
+            scores.push(starter.pitchingScore);
+        } else {
+            console.warn(
+                `teamSeasonPitchingScore: starter score missing for FINAL game; skipping`,
+                { teamId, seasonId, gameId: game.id, starterId },
+            );
+        }
+    }
+
+    // Include the in-flight game's starter score. The parent Game is still
+    // SCHEDULED here (FINAL flips last for crash safety), so the FINAL-only
+    // query above can't see it, but PlayerGamePitchingStats was already
+    // written earlier by updatePlayerStats.
+    const currentGame = await tx.game.findUnique({
+        where: { id: currentGameId },
+        select: { homeTeamId: true, startingPitcherHomeId: true, startingPitcherAwayId: true },
+    });
+    const currentStarterId =
+        currentGame?.homeTeamId === teamId
+            ? currentGame?.startingPitcherHomeId
+            : currentGame?.startingPitcherAwayId;
+    if (currentStarterId == null) {
+        console.warn(
+            `teamSeasonPitchingScore: in-flight game has no startingPitcher${currentGame?.homeTeamId === teamId ? "Home" : "Away"}Id; current start excluded`,
+            { teamId, seasonId, currentGameId },
+        );
+    } else {
+        const currentStarterStat = await tx.playerGamePitchingStats.findUnique({
+            where: { playerId_gameId: { playerId: currentStarterId, gameId: currentGameId } },
+            select: { pitchingScore: true, gamesStarted: true },
+        });
+        if (currentStarterStat?.gamesStarted === 1 && currentStarterStat.pitchingScore != null) {
+            scores.push(currentStarterStat.pitchingScore);
+        } else {
+            console.warn(
+                `teamSeasonPitchingScore: in-flight starter score missing; current start excluded`,
+                { teamId, seasonId, currentGameId, currentStarterId },
+            );
+        }
+    }
+
     const teamPitchingScore =
-        starterScores.length > 0
-            ? starterScores.reduce((acc, s) => acc + (s.pitchingScore ?? 0), 0) / starterScores.length
-            : null;
+        scores.length > 0 ? scores.reduce((acc, s) => acc + s, 0) / scores.length : null;
 
     await tx.teamSeasonPitchingStats.update({
         where: { teamId_seasonId: { teamId, seasonId } },
@@ -1131,7 +1205,7 @@ async function logPlayerGamePitchingStats(
             caughtStealing: gameStats.caughtStealing,
             stolenBases: gameStats.stolenBases,
             numberOfPitches: gameStats.numberOfPitches,
-            inningsPitched: parseFloat(gameStats.inningsPitched),
+            inningsPitched: outsToBaseballIP(gameStats.outs),
             wins: gameStats.wins,
             losses: gameStats.losses,
             saves: gameStats.saves,
@@ -1212,7 +1286,7 @@ async function updatePlayerSeasonPitchingStats(
                 caughtStealing: gameStats.caughtStealing,
                 stolenBases: gameStats.stolenBases,
                 numberOfPitches: gameStats.numberOfPitches,
-                inningsPitched: parseFloat(gameStats.inningsPitched),
+                inningsPitched: outsToBaseballIP(gameStats.outs),
                 wins: gameStats.wins,
                 losses: gameStats.losses,
                 saves: gameStats.saves,
@@ -1293,7 +1367,7 @@ async function updatePlayerSeasonPitchingStats(
                 caughtStealing: seasonStats.caughtStealing + gameStats.caughtStealing,
                 stolenBases: seasonStats.stolenBases + gameStats.stolenBases,
                 numberOfPitches: seasonStats.numberOfPitches + gameStats.numberOfPitches,
-                inningsPitched: seasonStats.inningsPitched + parseFloat(gameStats.inningsPitched),
+                inningsPitched: outsToBaseballIP(seasonStats.outs + gameStats.outs),
                 wins: seasonStats.wins + gameStats.wins,
                 losses: seasonStats.losses + gameStats.losses,
                 saves: seasonStats.saves + gameStats.saves,

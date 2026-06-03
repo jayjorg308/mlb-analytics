@@ -95,7 +95,7 @@ function FinalStatsBody({ pitcher, stats }: { pitcher: GamePitcher; stats: GameP
 function LiveStatsBody({ pitcher }: { pitcher: NonNullable<GamePitcher> }) {
     const season = pitcher.PlayerSeasonPitchingStats[0];
     const eraWhip = season
-        ? getPitcherStats(season.earnedRuns, season.baseOnBalls, season.hits, season.inningsPitched)
+        ? getPitcherStats(season.earnedRuns, season.baseOnBalls, season.hits, season.outs)
         : null;
 
     return (

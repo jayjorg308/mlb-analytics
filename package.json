@@ -9,9 +9,7 @@
         "lint": "next lint",
         "generate": "prisma generate",
         "fetch:lineups": "ts-node src/cron/fetchLineupsAndPitchers.ts",
-        "process:games": "ts-node src/cron/processGames.ts",
-        "fix:pitching": "ts-node src/cron/fixPitchingScores.ts",
-        "fix:ip": "ts-node src/cron/fixIP.ts"
+        "process:games": "ts-node src/cron/processGames.ts"
     },
     "dependencies": {
         "@emotion/cache": "^11.14.0",
