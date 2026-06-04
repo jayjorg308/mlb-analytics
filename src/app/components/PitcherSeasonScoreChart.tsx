@@ -69,12 +69,25 @@ function bucketFor(score: number): Bucket {
 const CHART_HEIGHT = 380;
 const MARGIN = { top: 20, right: 64, bottom: 40, left: 44 };
 
-export default function PitcherSeasonScoreChart({ pitcherId }: { pitcherId: number }) {
-    const [data, setData] = useState<PitcherStartsResponse | null>(null);
+export default function PitcherSeasonScoreChart({
+    pitcherId,
+    initialData,
+    showSummary = true,
+}: {
+    pitcherId: number;
+    initialData?: PitcherStartsResponse;
+    showSummary?: boolean;
+}) {
+    const [data, setData] = useState<PitcherStartsResponse | null>(initialData ?? null);
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialData);
 
     useEffect(() => {
+        if (initialData) {
+            setData(initialData);
+            setLoading(false);
+            return;
+        }
         let cancelled = false;
         setLoading(true);
         setError(null);
@@ -95,7 +108,7 @@ export default function PitcherSeasonScoreChart({ pitcherId }: { pitcherId: numb
         return () => {
             cancelled = true;
         };
-    }, [pitcherId]);
+    }, [pitcherId, initialData]);
 
     if (loading) {
         return (
@@ -119,10 +132,10 @@ export default function PitcherSeasonScoreChart({ pitcherId }: { pitcherId: numb
         );
     }
 
-    return <ChartView data={data} />;
+    return <ChartView data={data} showSummary={showSummary} />;
 }
 
-function ChartView({ data }: { data: PitcherStartsResponse }) {
+function ChartView({ data, showSummary }: { data: PitcherStartsResponse; showSummary: boolean }) {
     const theme = useTheme();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [width, setWidth] = useState(720);
@@ -191,7 +204,7 @@ function ChartView({ data }: { data: PitcherStartsResponse }) {
 
     return (
         <Box>
-            <SummaryHeader data={data} />
+            {showSummary && <SummaryHeader data={data} />}
 
             <Box ref={containerRef} sx={{ position: "relative", width: "100%" }}>
                 <svg width={width} height={CHART_HEIGHT} role="img" aria-label="Pitcher season score chart">

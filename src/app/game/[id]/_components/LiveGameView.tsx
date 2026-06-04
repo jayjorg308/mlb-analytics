@@ -41,6 +41,7 @@ export default function LiveGameView({ detail }: { detail: GameDetail }) {
                 away={game.awayStartingPitcher}
                 homeTeam={game.homeTeam}
                 awayTeam={game.awayTeam}
+                gameId={game.id}
             />
 
             <Divider sx={{ my: 2 }} />

@@ -33,6 +33,7 @@ export default function FinalGameView({ detail }: { detail: GameDetail }) {
                 homeTeam={game.homeTeam}
                 awayTeam={game.awayTeam}
                 gameStats={pitcherStatsMap}
+                gameId={game.id}
             />
 
             <Divider sx={{ my: 3 }} />

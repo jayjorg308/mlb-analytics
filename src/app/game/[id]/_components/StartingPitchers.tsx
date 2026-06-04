@@ -1,7 +1,7 @@
 import { Fragment, ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Box, Chip, Typography } from "@mui/material";
-import PitcherDialog from "@/app/components/PitcherDialog";
 import { getPitcherStats } from "@/app/shared/statCalcUtils";
 import { DECISION_COLOR, DECISION_LABEL } from "@/app/shared/pitcherDecisionLabels";
 import type { GamePitcher, GamePitcherStats, GameWithRelations } from "../_data";
@@ -14,6 +14,7 @@ function PitcherCardShell({
     photoSize,
     gap,
     infoFlex,
+    gameId,
     children,
 }: {
     pitcher: GamePitcher | null;
@@ -21,6 +22,7 @@ function PitcherCardShell({
     photoSize: number;
     gap: number;
     infoFlex?: number;
+    gameId: number;
     children: ReactNode;
 }) {
     if (!pitcher) {
@@ -36,10 +38,22 @@ function PitcherCardShell({
     const infoSx = infoFlex !== undefined ? { flex: infoFlex } : undefined;
     return (
         <Box sx={{ width: "48%" }}>
-            <PitcherDialog
-                pitcher={{ id: pitcher.id, firstName: pitcher.firstName, lastName: pitcher.lastName }}
+            <Link
+                href={`/pitcher/${pitcher.id}?from=game&gameId=${gameId}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+                aria-label={`View ${pitcher.firstName} ${pitcher.lastName} details`}
             >
-                <Box sx={{ display: "flex", alignItems: "center", gap, p: 1 }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap,
+                        p: 1,
+                        borderRadius: 1,
+                        transition: "background-color 0.15s",
+                        "&:hover": { backgroundColor: "action.hover" },
+                    }}
+                >
                     {pitcher.photoUrl && (
                         <Image
                             src={pitcher.photoUrl}
@@ -56,7 +70,7 @@ function PitcherCardShell({
                         {children}
                     </Box>
                 </Box>
-            </PitcherDialog>
+            </Link>
         </Box>
     );
 }
@@ -147,19 +161,33 @@ export function FinalStartingPitchers({
     homeTeam,
     awayTeam,
     gameStats,
+    gameId,
 }: {
     home: GamePitcher | null;
     away: GamePitcher | null;
     homeTeam: Team;
     awayTeam: Team;
     gameStats: Map<number, GamePitcherStats>;
+    gameId: number;
 }) {
     return (
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-            <PitcherCardShell pitcher={away} label={awayTeam.abbreviation} photoSize={54} gap={1}>
+            <PitcherCardShell
+                pitcher={away}
+                label={awayTeam.abbreviation}
+                photoSize={54}
+                gap={1}
+                gameId={gameId}
+            >
                 {away && <FinalStatsBody pitcher={away} stats={gameStats.get(away.id)} />}
             </PitcherCardShell>
-            <PitcherCardShell pitcher={home} label={homeTeam.abbreviation} photoSize={54} gap={1}>
+            <PitcherCardShell
+                pitcher={home}
+                label={homeTeam.abbreviation}
+                photoSize={54}
+                gap={1}
+                gameId={gameId}
+            >
                 {home && <FinalStatsBody pitcher={home} stats={gameStats.get(home.id)} />}
             </PitcherCardShell>
         </Box>
@@ -171,11 +199,13 @@ export function LiveStartingPitchers({
     away,
     homeTeam,
     awayTeam,
+    gameId,
 }: {
     home: GamePitcher | null;
     away: GamePitcher | null;
     homeTeam: Team;
     awayTeam: Team;
+    gameId: number;
 }) {
     return (
         <Box
@@ -187,10 +217,24 @@ export function LiveStartingPitchers({
                 gap: 2,
             }}
         >
-            <PitcherCardShell pitcher={away} label={awayTeam.abbreviation} photoSize={64} gap={2} infoFlex={1}>
+            <PitcherCardShell
+                pitcher={away}
+                label={awayTeam.abbreviation}
+                photoSize={64}
+                gap={2}
+                infoFlex={1}
+                gameId={gameId}
+            >
                 {away && <LiveStatsBody pitcher={away} />}
             </PitcherCardShell>
-            <PitcherCardShell pitcher={home} label={homeTeam.abbreviation} photoSize={64} gap={2} infoFlex={1}>
+            <PitcherCardShell
+                pitcher={home}
+                label={homeTeam.abbreviation}
+                photoSize={64}
+                gap={2}
+                infoFlex={1}
+                gameId={gameId}
+            >
                 {home && <LiveStatsBody pitcher={home} />}
             </PitcherCardShell>
         </Box>

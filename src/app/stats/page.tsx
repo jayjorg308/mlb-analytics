@@ -2,7 +2,7 @@
 
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Paper, Tabs, Tab, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Paper, Tabs, Tab, Typography, Accordion, AccordionSummary, AccordionDetails, Link as MuiLink } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -52,7 +52,26 @@ interface TeamStats {
 }
 
 const pitcherColumns: GridColDef[] = [
-    { field: "name", headerName: "Name", flex: 1, minWidth: 200 },
+    {
+        field: "name",
+        headerName: "Name",
+        flex: 1,
+        minWidth: 200,
+        renderCell: (params) => (
+            <MuiLink
+                component={Link}
+                href={`/pitcher/${params.row.id}?from=stats`}
+                underline="hover"
+                sx={{
+                    color: "text.primary",
+                    fontWeight: 500,
+                    "&:hover": { color: "primary.main" },
+                }}
+            >
+                {params.value}
+            </MuiLink>
+        ),
+    },
     { field: "team", headerName: "Team", width: 100 },
     { field: "wins", headerName: "W", width: 80 },
     { field: "losses", headerName: "L", width: 80 },
