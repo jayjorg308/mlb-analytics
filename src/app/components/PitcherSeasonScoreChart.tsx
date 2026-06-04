@@ -27,6 +27,7 @@ export type PitcherStart = {
     homeRuns: number;
     opponent: Opponent;
     isHome: boolean;
+    opponentRecordEntering: { wins: number; losses: number };
 };
 
 export type PitcherSeasonSummary = {
@@ -64,6 +65,24 @@ function bucketFor(score: number): Bucket {
     if (score < 55) return { label: "Mediocre", color: BUCKET_COLORS.mediocre };
     if (score < 70) return { label: "Good", color: BUCKET_COLORS.good };
     return { label: "Exceptional", color: BUCKET_COLORS.exceptional };
+}
+
+const NO_RECORD_COLOR = "#9e9e9e";
+
+type OpponentEncoding = "winning" | "losing" | "none";
+
+function opponentEncodingFor(rec: { wins: number; losses: number }): OpponentEncoding {
+    const total = rec.wins + rec.losses;
+    if (total === 0) return "none";
+    // Exact .500 is treated as a winning record (>= .500) to avoid an ambiguous third state.
+    return rec.wins / total >= 0.5 ? "winning" : "losing";
+}
+
+function formatWinPct(rec: { wins: number; losses: number }): string {
+    const total = rec.wins + rec.losses;
+    if (total === 0) return "";
+    const pct = rec.wins / total;
+    return pct.toFixed(3).replace(/^0/, "");
 }
 
 const CHART_HEIGHT = 380;
@@ -234,12 +253,7 @@ function ChartView({ data, showSummary }: { data: PitcherStartsResponse; showSum
                             {xTicks.map((t, i) => (
                                 <g key={i} transform={`translate(${x(t)},0)`}>
                                     <line y1={0} y2={5} stroke={theme.palette.text.secondary} />
-                                    <text
-                                        y={20}
-                                        textAnchor="middle"
-                                        fontSize={11}
-                                        fill={theme.palette.text.secondary}
-                                    >
+                                    <text y={20} textAnchor="middle" fontSize={11} fill={theme.palette.text.secondary}>
                                         {d3.timeFormat("%b %d")(t)}
                                     </text>
                                 </g>
@@ -289,20 +303,41 @@ function ChartView({ data, showSummary }: { data: PitcherStartsResponse; showSum
                         {starts.map((s) => {
                             const cx = x(new Date(s.date));
                             const cy = y(s.pitchingScore);
+                            const encoding = opponentEncodingFor(s.opponentRecordEntering);
+                            const bucketColor = bucketFor(s.pitchingScore).color;
+                            const hoverHandlers = {
+                                onMouseEnter: () =>
+                                    setHover({ start: s, x: cx + MARGIN.left, y: cy + MARGIN.top }),
+                                onMouseLeave: () => setHover(null),
+                            };
+                            if (encoding === "none") {
+                                // Season's first game (opponent had no prior games): neutral dot — no opponent context to encode.
+                                return (
+                                    <circle
+                                        key={s.gameId}
+                                        cx={cx}
+                                        cy={cy}
+                                        r={4}
+                                        fill={NO_RECORD_COLOR}
+                                        stroke="none"
+                                        style={{ cursor: "pointer" }}
+                                        {...hoverHandlers}
+                                    />
+                                );
+                            }
+                            // Winning opponent (>=.500): filled. Losing opponent (<.500): hollow with bucket-colored ring.
+                            const filled = encoding === "winning";
                             return (
                                 <circle
                                     key={s.gameId}
                                     cx={cx}
                                     cy={cy}
                                     r={5}
-                                    fill={bucketFor(s.pitchingScore).color}
-                                    stroke={theme.palette.background.paper}
-                                    strokeWidth={1.5}
+                                    fill={filled ? bucketColor : theme.palette.background.paper}
+                                    stroke={bucketColor}
+                                    strokeWidth={2}
                                     style={{ cursor: "pointer" }}
-                                    onMouseEnter={() =>
-                                        setHover({ start: s, x: cx + MARGIN.left, y: cy + MARGIN.top })
-                                    }
-                                    onMouseLeave={() => setHover(null)}
+                                    {...hoverHandlers}
                                 />
                             );
                         })}
@@ -320,7 +355,13 @@ function ChartView({ data, showSummary }: { data: PitcherStartsResponse; showSum
                 )}
             </Box>
 
-            <Legend hasRolling={starts.length >= 2} hasAverage={!!season && season.seasonAverageScore > 0} />
+            <Legend
+                hasRolling={starts.length >= 2}
+                hasAverage={!!season && season.seasonAverageScore > 0}
+                hasNoRecord={starts.some(
+                    (s) => opponentEncodingFor(s.opponentRecordEntering) === "none",
+                )}
+            />
         </Box>
     );
 }
@@ -424,12 +465,7 @@ function Tooltip({
                 </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                <Image
-                    src={start.opponent.logoUrl}
-                    alt={start.opponent.abbreviation}
-                    width={22}
-                    height={22}
-                />
+                <Image src={start.opponent.logoUrl} alt={start.opponent.abbreviation} width={22} height={22} />
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {start.isHome ? "vs" : "@"} {start.opponent.abbreviation}
                 </Typography>
@@ -441,6 +477,27 @@ function Tooltip({
                         sx={{ height: 18, fontSize: "0.7rem", ml: "auto" }}
                     />
                 )}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.75, mb: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                    OPP REC
+                </Typography>
+                {(() => {
+                    const rec = start.opponentRecordEntering;
+                    const total = rec.wins + rec.losses;
+                    if (total === 0) {
+                        return (
+                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                                —
+                            </Typography>
+                        );
+                    }
+                    return (
+                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                            {rec.wins}-{rec.losses} ({formatWinPct(rec)})
+                        </Typography>
+                    );
+                })()}
             </Box>
             <Box
                 sx={{
@@ -484,7 +541,15 @@ function Tooltip({
     );
 }
 
-function Legend({ hasRolling, hasAverage }: { hasRolling: boolean; hasAverage: boolean }) {
+function Legend({
+    hasRolling,
+    hasAverage,
+    hasNoRecord,
+}: {
+    hasRolling: boolean;
+    hasAverage: boolean;
+    hasNoRecord: boolean;
+}) {
     const theme = useTheme();
     const swatches: { color: string; label: string }[] = [
         { color: BUCKET_COLORS.poor, label: "Poor (<40)" },
@@ -493,37 +558,89 @@ function Legend({ hasRolling, hasAverage }: { hasRolling: boolean; hasAverage: b
         { color: BUCKET_COLORS.exceptional, label: "Exceptional (70+)" },
     ];
     return (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 1, px: 0.5 }}>
-            {swatches.map((s) => (
-                <Box key={s.label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Box sx={{ width: 10, height: 10, bgcolor: s.color, borderRadius: "50%" }} />
-                    <Typography variant="caption" color="text.secondary">
-                        {s.label}
-                    </Typography>
-                </Box>
-            ))}
-            {hasAverage && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Box sx={{ width: 16, height: 2, bgcolor: theme.palette.primary.main }} />
-                    <Typography variant="caption" color="text.secondary">
-                        Season avg
-                    </Typography>
-                </Box>
-            )}
-            {hasRolling && (
+        <Box sx={{ mt: 1, px: 0.5 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                {swatches.map((s) => (
+                    <Box key={s.label} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box sx={{ width: 10, height: 10, bgcolor: s.color, borderRadius: "50%" }} />
+                        <Typography variant="caption" color="text.secondary">
+                            {s.label}
+                        </Typography>
+                    </Box>
+                ))}
+                {hasAverage && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box sx={{ width: 16, height: 2, bgcolor: theme.palette.primary.main }} />
+                        <Typography variant="caption" color="text.secondary">
+                            Season avg
+                        </Typography>
+                    </Box>
+                )}
+                {hasRolling && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                            sx={{
+                                width: 16,
+                                height: 2,
+                                background: `repeating-linear-gradient(to right, ${theme.palette.secondary.main} 0 5px, transparent 5px 9px)`,
+                            }}
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                            5-game rolling avg
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mt: 0.75 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                    Opp record entering game:
+                </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Box
                         sx={{
-                            width: 16,
-                            height: 2,
-                            background: `repeating-linear-gradient(to right, ${theme.palette.secondary.main} 0 5px, transparent 5px 9px)`,
+                            width: 12,
+                            height: 12,
+                            boxSizing: "border-box",
+                            borderRadius: "50%",
+                            bgcolor: theme.palette.text.primary,
                         }}
                     />
-                    <Typography variant="caption" color="text.secondary">
-                        5-game rolling avg
+                    <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                        Winning record (≥.500)
                     </Typography>
                 </Box>
-            )}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box
+                        sx={{
+                            width: 12,
+                            height: 12,
+                            boxSizing: "border-box",
+                            borderRadius: "50%",
+                            border: `2px solid ${theme.palette.text.primary}`,
+                            bgcolor: "transparent",
+                        }}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                        Losing record (&lt;.500)
+                    </Typography>
+                </Box>
+                {hasNoRecord && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                            sx={{
+                                width: 8,
+                                height: 8,
+                                boxSizing: "border-box",
+                                borderRadius: "50%",
+                                bgcolor: NO_RECORD_COLOR,
+                            }}
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1 }}>
+                            No record yet (season opener)
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
         </Box>
     );
 }

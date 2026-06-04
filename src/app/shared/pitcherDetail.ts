@@ -1,3 +1,4 @@
+import { GameStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPitcherStats } from "@/app/shared/statCalcUtils";
 import type {
@@ -89,21 +90,31 @@ export async function getPitcherDetail(pitcherId: number): Promise<PitcherDetail
         orderBy: { game: { date: "asc" } },
     });
 
-    const starts: PitcherStart[] = startsRaw.map((s, idx) => {
+    const startMeta = startsRaw.map((s) => {
         const isHome = player.teamId != null && s.game.homeTeamId === player.teamId;
         const opponentTeam = isHome ? s.game.awayTeam : s.game.homeTeam;
+        return { raw: s, isHome, opponentTeam, opponentId: opponentTeam.id };
+    });
+
+    const opponentRecords = await computeOpponentRecordsEntering(
+        startMeta.map((m) => ({ opponentId: m.opponentId, date: m.raw.game.date })),
+        seasonId,
+    );
+
+    const starts: PitcherStart[] = startMeta.map(({ raw, isHome, opponentTeam, opponentId }, idx) => {
+        const key = recordKey(opponentId, raw.game.date);
         return {
-            gameId: s.gameId,
-            date: s.game.date.toISOString(),
+            gameId: raw.gameId,
+            date: raw.game.date.toISOString(),
             startNumber: idx + 1,
-            pitchingScore: s.pitchingScore as number,
-            decision: s.decision,
-            inningsPitched: s.inningsPitched,
-            strikeOuts: s.strikeOuts,
-            baseOnBalls: s.baseOnBalls,
-            hits: s.hits,
-            runs: s.runs,
-            homeRuns: s.homeRuns,
+            pitchingScore: raw.pitchingScore as number,
+            decision: raw.decision,
+            inningsPitched: raw.inningsPitched,
+            strikeOuts: raw.strikeOuts,
+            baseOnBalls: raw.baseOnBalls,
+            hits: raw.hits,
+            runs: raw.runs,
+            homeRuns: raw.homeRuns,
             opponent: {
                 id: opponentTeam.id,
                 name: opponentTeam.name,
@@ -111,6 +122,7 @@ export async function getPitcherDetail(pitcherId: number): Promise<PitcherDetail
                 logoUrl: opponentTeam.logo_url,
             },
             isHome,
+            opponentRecordEntering: opponentRecords.get(key) ?? { wins: 0, losses: 0 },
         };
     });
 
@@ -160,4 +172,60 @@ export async function getPitcherDetail(pitcherId: number): Promise<PitcherDetail
         season,
         starts,
     };
+}
+
+function recordKey(opponentId: number, date: Date): string {
+    return `${opponentId}|${date.toISOString()}`;
+}
+
+async function computeOpponentRecordsEntering(
+    queries: { opponentId: number; date: Date }[],
+    seasonId: number | undefined,
+): Promise<Map<string, { wins: number; losses: number }>> {
+    const result = new Map<string, { wins: number; losses: number }>();
+    if (queries.length === 0 || seasonId == null) return result;
+
+    const opponentIds = Array.from(new Set(queries.map((q) => q.opponentId)));
+    const latestDate = queries.reduce(
+        (acc, q) => (q.date > acc ? q.date : acc),
+        queries[0].date,
+    );
+
+    const opponentGames = await prisma.game.findMany({
+        where: {
+            season_id: seasonId,
+            status: GameStatus.FINAL,
+            date: { lt: latestDate },
+            OR: [
+                { homeTeamId: { in: opponentIds } },
+                { awayTeamId: { in: opponentIds } },
+            ],
+        },
+        select: { date: true, homeTeamId: true, awayTeamId: true, winningTeamId: true },
+        orderBy: { date: "asc" },
+    });
+
+    const perTeam = new Map<number, { date: Date; wonByOpponent: boolean }[]>();
+    for (const id of opponentIds) perTeam.set(id, []);
+    for (const g of opponentGames) {
+        for (const id of [g.homeTeamId, g.awayTeamId]) {
+            const arr = perTeam.get(id);
+            if (!arr) continue;
+            arr.push({ date: g.date, wonByOpponent: g.winningTeamId === id });
+        }
+    }
+
+    for (const { opponentId, date } of queries) {
+        const arr = perTeam.get(opponentId) ?? [];
+        let wins = 0;
+        let losses = 0;
+        for (const g of arr) {
+            if (g.date >= date) break;
+            if (g.wonByOpponent) wins += 1;
+            else losses += 1;
+        }
+        result.set(recordKey(opponentId, date), { wins, losses });
+    }
+
+    return result;
 }

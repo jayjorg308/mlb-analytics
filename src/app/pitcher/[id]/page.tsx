@@ -68,7 +68,7 @@ export default async function Page({
                 />
             </Paper>
 
-            <GameLogTable starts={detail.starts} />
+            <GameLogTable starts={detail.starts} pitcherId={detail.pitcher.id} />
         </Box>
     );
 }

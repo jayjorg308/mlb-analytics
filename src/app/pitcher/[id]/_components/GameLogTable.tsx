@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { Box, Chip, Paper, Typography } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
@@ -8,7 +9,8 @@ import { DECISION_COLOR, DECISION_LABEL } from "@/app/shared/pitcherDecisionLabe
 
 type Row = PitcherStart & { id: number };
 
-const columns: GridColDef<Row>[] = [
+function buildColumns(pitcherId: number): GridColDef<Row>[] {
+    return [
     {
         field: "date",
         headerName: "Date",
@@ -20,10 +22,9 @@ const columns: GridColDef<Row>[] = [
                 day: "numeric",
                 year: "numeric",
             });
-            const dateParam = d.toISOString().slice(0, 10);
             return (
                 <Link
-                    href={`/game/${params.row.gameId}?date=${dateParam}`}
+                    href={`/game/${params.row.gameId}?from=pitcher&pitcherId=${pitcherId}`}
                     style={{ color: "inherit", textDecoration: "underline" }}
                 >
                     {label}
@@ -50,22 +51,69 @@ const columns: GridColDef<Row>[] = [
         },
     },
     {
+        field: "opponentRecordEntering",
+        headerName: "Opp Rec",
+        width: 130,
+        sortable: true,
+        valueGetter: (_value, row) => {
+            const rec = row.opponentRecordEntering;
+            const total = rec.wins + rec.losses;
+            return total === 0 ? -1 : rec.wins / total;
+        },
+        renderCell: (params) => {
+            const rec = params.row.opponentRecordEntering;
+            const total = rec.wins + rec.losses;
+            if (total === 0) {
+                return (
+                    <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                        <Typography variant="body2" color="text.secondary">
+                            —
+                        </Typography>
+                    </Box>
+                );
+            }
+            const pct = (rec.wins / total).toFixed(3).replace(/^0/, "");
+            return (
+                <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                    <Typography variant="body2">
+                        {rec.wins}-{rec.losses}{" "}
+                        <Typography component="span" variant="body2" color="text.secondary">
+                            ({pct})
+                        </Typography>
+                    </Typography>
+                </Box>
+            );
+        },
+    },
+    {
         field: "decision",
         headerName: "Decision",
         width: 110,
-        renderCell: (params) =>
-            params.row.decision ? (
-                <Chip
-                    label={DECISION_LABEL[params.row.decision]}
-                    color={DECISION_COLOR[params.row.decision]}
-                    size="small"
-                    sx={{ height: 22, fontSize: "0.75rem" }}
-                />
-            ) : (
-                <Typography variant="body2" color="text.secondary">
-                    —
-                </Typography>
-            ),
+        align: "center",
+        headerAlign: "center",
+        renderCell: (params) => (
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                }}
+            >
+                {params.row.decision ? (
+                    <Chip
+                        label={DECISION_LABEL[params.row.decision]}
+                        color={DECISION_COLOR[params.row.decision]}
+                        size="small"
+                        sx={{ height: 22, fontSize: "0.75rem" }}
+                    />
+                ) : (
+                    <Typography variant="body2" color="text.secondary">
+                        —
+                    </Typography>
+                )}
+            </Box>
+        ),
     },
     {
         field: "inningsPitched",
@@ -97,10 +145,12 @@ const columns: GridColDef<Row>[] = [
         align: "left",
         valueFormatter: (value: number) => value?.toFixed(1) ?? "—",
     },
-];
+    ];
+}
 
-export default function GameLogTable({ starts }: { starts: PitcherStart[] }) {
+export default function GameLogTable({ starts, pitcherId }: { starts: PitcherStart[]; pitcherId: number }) {
     const rows: Row[] = starts.map((s) => ({ ...s, id: s.gameId }));
+    const columns = useMemo(() => buildColumns(pitcherId), [pitcherId]);
     return (
         <Paper sx={{ p: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
