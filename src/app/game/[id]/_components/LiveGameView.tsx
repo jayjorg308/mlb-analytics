@@ -1,14 +1,14 @@
 import Image from "next/image";
 import { Box, Divider, Typography } from "@mui/material";
 import { LiveStartingPitchers } from "./StartingPitchers";
-import StartingLineups from "./StartingLineups";
+import { LiveStartingLineups } from "./StartingLineups";
 import type { GameDetail } from "../_data";
 
 export default function LiveGameView({ detail }: { detail: GameDetail }) {
     const { game, orderedHomePlayers, orderedAwayPlayers } = detail;
 
     return (
-        <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+        <Box sx={{ maxWidth: 800, mx: "auto", pt: 2, pr: 2, pl: 2, pb: 6 }}>
             <Typography variant="h4" align="center" sx={{ mb: 2 }}>
                 {game.awayTeam.name} @ {game.homeTeam.name}
             </Typography>
@@ -49,12 +49,11 @@ export default function LiveGameView({ detail }: { detail: GameDetail }) {
             <Typography variant="h6" align="center">
                 Starting Lineup
             </Typography>
-            <StartingLineups
+            <LiveStartingLineups
                 homeTeam={game.homeTeam}
                 awayTeam={game.awayTeam}
                 home={orderedHomePlayers}
                 away={orderedAwayPlayers}
-                align="center"
             />
         </Box>
     );

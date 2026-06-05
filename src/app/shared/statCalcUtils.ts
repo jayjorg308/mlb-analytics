@@ -6,6 +6,23 @@ export const getPitcherStats = (earnedRuns: number, walks: number, hits: number,
     return { era, whip };
 };
 
+export const getBattingStats = (
+    hits: number,
+    atBats: number,
+    walks: number,
+    hitByPitch: number,
+    sacFlies: number,
+) => {
+    if (atBats === 0) return { avg: ".---", obp: ".---" };
+    const avg = (hits / atBats).toFixed(3).replace(/^0/, "");
+    const obpDenom = atBats + walks + hitByPitch + sacFlies;
+    const obp =
+        obpDenom === 0
+            ? ".---"
+            : ((hits + walks + hitByPitch) / obpDenom).toFixed(3).replace(/^0/, "");
+    return { avg, obp };
+};
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
