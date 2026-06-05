@@ -129,7 +129,7 @@ The opponent's record entering each game is computed on-demand from the underlyi
  
 This approach was chosen deliberately. Current-day stats (the Yankees' record today) don't accurately represent what a team's record was at the time of a past matchup — a team that's 30-30 today might have been 22-12 in April when this game was played. Computing the record-to-date from underlying game data gives a temporally accurate metric without requiring snapshot fields in the database.
  
-The game log table below the chart shows each opponent's record-at-time formatted as `24-17 (.585)` for precise lookup. The chart marker encoding (filled vs. hollow) reduces this to the binary signal needed at a glance.
+The game log table below the chart shows each opponent's record-at-time formatted as `27-33 (.450)` for precise lookup. The chart marker encoding (filled vs. hollow) reduces this to the binary signal needed at a glance.
  
 ![Game log](./docs/screenshots/pitcher-detail-gamelog.png)
  
