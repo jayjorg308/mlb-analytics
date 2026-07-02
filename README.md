@@ -4,8 +4,6 @@
  
 A personal sports analytics platform for tracking MLB games, team performance, and pitcher statistics. Built as a hands-on exploration of full-stack engineering, sports data, and AWS deployment — driven by a longtime interest in sports analytics.
  
-**Live site:** [jaysonjorgensen.dev](https://jaysonjorgensen.dev)
- 
 ![Dashboard view](./docs/screenshots/dashboard.png)
  
 ---
