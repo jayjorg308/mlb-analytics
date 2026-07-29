@@ -1,4 +1,4 @@
-![Deploy](https://github.com/jayjorg308/mlb-analytics/actions/workflows/deploy.yml/badge.svg)
+No longer hosted
 
 # MLB Daily Analytics
  
